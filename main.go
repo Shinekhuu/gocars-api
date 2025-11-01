@@ -3,9 +3,10 @@ package main
 import (
 	"log"
 
-	"gocars-api/config"
 	"gocars-api/controllers"
+	"gocars-api/database"
 	"gocars-api/middleware"
+	"gocars-api/models"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -17,10 +18,29 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	config.InitDB()
+	database.InitDB()
+
+	// Auto-migrate models here
+	if err := database.DB.AutoMigrate(
+		&models.User{},
+		&models.Otp{},
+		&models.Xyr{},
+		&models.Manufacturer{},
+		&models.Model{},
+		&models.Engine{},
+	); err != nil {
+		log.Fatal("Failed to migrate database:", err)
+	}
 
 	router := gin.Default()
-	router.Use(cors.Default())
+	// Configure CORS
+	config := cors.Config{
+		AllowOrigins:     []string{"https://gocars.mn", "http://localhost:5173"}, // your frontend domain
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}
+	router.Use(cors.New(config))
 
 	router.GET("/", func(c *gin.Context) { c.JSON(200, gin.H{"message": "Welcome"}) })
 	router.POST("/signin", controllers.SignIn)
@@ -28,9 +48,16 @@ func main() {
 	router.POST("/verify-otp", controllers.VerifyOtp)
 	router.POST("/resend-otp", controllers.ResendOtp)
 
+	router.GET("/manufactures", controllers.GetManufacturers)
+	router.GET("/model", controllers.GetModels)
+	router.GET("/engine", controllers.GetEngines)
+
 	router.GET("/crawler", controllers.Garage)
 	router.GET("/search", controllers.SearchOEM)
 	router.GET("/shop", controllers.Shop)
+
+	router.GET("/decode", controllers.Decode)
+	router.POST("/vehicle", controllers.GetXyrData)
 
 	// Protected routes
 	authorized := router.Group("/")
