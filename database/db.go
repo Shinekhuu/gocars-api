@@ -1,11 +1,9 @@
-package config
+package database
 
 import (
 	"fmt"
 	"log"
 	"os"
-
-	"gocars-api/models"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -29,14 +27,6 @@ func InitDB() {
 	})
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
-	}
-
-	if err := DB.AutoMigrate(&models.User{}); err != nil {
-		log.Fatal("Failed to migrate database:", err)
-	}
-
-	if err := DB.AutoMigrate(&models.Otp{}); err != nil {
-		log.Fatal("Failed to migrate database:", err)
 	}
 
 	log.Println("Database initialized successfully")

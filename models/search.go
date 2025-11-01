@@ -1,7 +1,10 @@
 package models
 
+import "gorm.io/gorm"
+
 // ArticleItem represents a single article item
 type ArticleItem struct {
+	gorm.Model
 	ArticleID            int    `json:"articleId"`
 	ArticleSearchNo      string `json:"articleSearchNo"`
 	ArticleNo            string `json:"articleNo"`

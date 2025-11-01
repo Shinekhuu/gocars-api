@@ -16,7 +16,7 @@ func SearchOEM(c *gin.Context) {
 
 	// Pagination query params
 	pageStr := c.DefaultQuery("page", "1")
-	limitStr := c.DefaultQuery("limit", "50")
+	limitStr := c.DefaultQuery("limit", "40")
 
 	page, err := strconv.Atoi(pageStr)
 	if err != nil || page < 1 {
@@ -25,7 +25,7 @@ func SearchOEM(c *gin.Context) {
 
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil || limit < 1 {
-		limit = 50
+		limit = 40
 	}
 
 	if oem == "" {

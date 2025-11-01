@@ -1,0 +1,238 @@
+{
+  "vehicleId": 10538,
+  "categoryId": 100343,
+  "countArticles": 21,
+  "articles": [
+    {
+      "articleId": 62447197,
+      "articleNo": "000098100000",
+      "supplierName": "Menabò",
+      "supplierId": 5648,
+      "articleProductName": "Roof Rack Foot",
+      "productId": 1201,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "e376d08b774fce8761e7da5c695a6a4a225a7250.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/5648/e376d08b774fce8761e7da5c695a6a4a225a7250.webp"
+    },
+    {
+      "articleId": 69955325,
+      "articleNo": "000126800000",
+      "supplierName": "Menabò",
+      "supplierId": 5648,
+      "articleProductName": "Roof Rack Bar",
+      "productId": 1200,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "3a23aba273ab1db47cf0907d2442c6b1afde6ee8.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/5648/3a23aba273ab1db47cf0907d2442c6b1afde6ee8.webp"
+    },
+    {
+      "articleId": 68500563,
+      "articleNo": "000134700000",
+      "supplierName": "Menabò",
+      "supplierId": 5648,
+      "articleProductName": "Roof Rack Bar",
+      "productId": 1200,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "d4d33a05d1c5163994ebc9f2d0738375c9bbdb00.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/5648/d4d33a05d1c5163994ebc9f2d0738375c9bbdb00.webp"
+    },
+    {
+      "articleId": 62446158,
+      "articleNo": "000125300000",
+      "supplierName": "Menabò",
+      "supplierId": 5648,
+      "articleProductName": "Roof Rack Bar",
+      "productId": 1200,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "ff88fced6f6f6b3d510487dfef44cc03c5782428.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/5648/ff88fced6f6f6b3d510487dfef44cc03c5782428.webp"
+    },
+    {
+      "articleId": 65465798,
+      "articleNo": "000125200000",
+      "supplierName": "Menabò",
+      "supplierId": 5648,
+      "articleProductName": "Roof Rack Bar",
+      "productId": 1200,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "1e78a3d78df981fc2b57c74a7b0b492a03d43297.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/5648/1e78a3d78df981fc2b57c74a7b0b492a03d43297.webp"
+    },
+    {
+      "articleId": 52235490,
+      "articleNo": "0001347_000098100000",
+      "supplierName": "Menabò",
+      "supplierId": 5648,
+      "articleProductName": "Roof Rack",
+      "productId": 127,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "7c6a17b77eb580059bbb25ee029cd48c1600fef8.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/5648/7c6a17b77eb580059bbb25ee029cd48c1600fef8.webp"
+    },
+    {
+      "articleId": 57100683,
+      "articleNo": "0001252_000098100000",
+      "supplierName": "Menabò",
+      "supplierId": 5648,
+      "articleProductName": "Roof Rack",
+      "productId": 127,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "a327523e63d8e0a91659a8e9cd2c0d442f0873c4.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/5648/a327523e63d8e0a91659a8e9cd2c0d442f0873c4.webp"
+    },
+    {
+      "articleId": 51776923,
+      "articleNo": "0001268_000098100000",
+      "supplierName": "Menabò",
+      "supplierId": 5648,
+      "articleProductName": "Roof Rack",
+      "productId": 127,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "f95420db2cd2c83e7efde34bcc41fdaa15e648ba.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/5648/f95420db2cd2c83e7efde34bcc41fdaa15e648ba.webp"
+    },
+    {
+      "articleId": 56166946,
+      "articleNo": "0001253_000098100000",
+      "supplierName": "Menabò",
+      "supplierId": 5648,
+      "articleProductName": "Roof Rack",
+      "productId": 127,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "900717e3190da560ebd1e3a77d05afd55f4be883.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/5648/900717e3190da560ebd1e3a77d05afd55f4be883.webp"
+    },
+    {
+      "articleId": 1374274,
+      "articleNo": "147105",
+      "supplierName": "RAMEDER",
+      "supplierId": 173,
+      "articleProductName": "Roof Rack",
+      "productId": 127,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "4ca8043a340946dc03fb667327d4501dbc8065bb.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/173/4ca8043a340946dc03fb667327d4501dbc8065bb.webp"
+    },
+    {
+      "articleId": 94846011,
+      "articleNo": "212767",
+      "supplierName": "RAMEDER",
+      "supplierId": 173,
+      "articleProductName": "Roof Rack",
+      "productId": 127,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "9293f8aff20677621dfe63af6650f38b4262d01a.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/173/9293f8aff20677621dfe63af6650f38b4262d01a.webp"
+    },
+    {
+      "articleId": 1062886,
+      "articleNo": "114922",
+      "supplierName": "RAMEDER",
+      "supplierId": 173,
+      "articleProductName": "Roof Rack",
+      "productId": 127,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "d20c5a3d16eb30a0a25c594c4a258a34a70ad2a5.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/173/d20c5a3d16eb30a0a25c594c4a258a34a70ad2a5.webp"
+    },
+    {
+      "articleId": 1372954,
+      "articleNo": "146996",
+      "supplierName": "RAMEDER",
+      "supplierId": 173,
+      "articleProductName": "Roof Rack",
+      "productId": 127,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "77b1e29cc6f9e8ca413e61e34f722daa6cfa125f.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/173/77b1e29cc6f9e8ca413e61e34f722daa6cfa125f.webp"
+    },
+    {
+      "articleId": 27048922,
+      "articleNo": "203282",
+      "supplierName": "RAMEDER",
+      "supplierId": 173,
+      "articleProductName": "Roof Rack",
+      "productId": 127,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "0465cdc6d0b842207dc6fbe0e8c46c38b6cc80b8.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/173/0465cdc6d0b842207dc6fbe0e8c46c38b6cc80b8.webp"
+    },
+    {
+      "articleId": 31886334,
+      "articleNo": "203284",
+      "supplierName": "RAMEDER",
+      "supplierId": 173,
+      "articleProductName": "Roof Rack",
+      "productId": 127,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "d92bf25fd8c142cf91ab5db042aba3160593ab2a.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/173/d92bf25fd8c142cf91ab5db042aba3160593ab2a.webp"
+    },
+    {
+      "articleId": 1591561,
+      "articleNo": "173448",
+      "supplierName": "RAMEDER",
+      "supplierId": 173,
+      "articleProductName": "Roof Rack",
+      "productId": 127,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "d9e7c06ae0c568c886007c61a6a49e6fd8613aa1.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/173/d9e7c06ae0c568c886007c61a6a49e6fd8613aa1.webp"
+    },
+    {
+      "articleId": 1591564,
+      "articleNo": "173449",
+      "supplierName": "RAMEDER",
+      "supplierId": 173,
+      "articleProductName": "Roof Rack",
+      "productId": 127,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "b87daf6764fd630389580144f6ce92ec3f102fb5.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/173/b87daf6764fd630389580144f6ce92ec3f102fb5.webp"
+    },
+    {
+      "articleId": 1105254,
+      "articleNo": "119656",
+      "supplierName": "RAMEDER",
+      "supplierId": 173,
+      "articleProductName": "Roof Rack",
+      "productId": 127,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "cabb44b1d1a831a7097a615f2a6a76b96e5681da.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/173/cabb44b1d1a831a7097a615f2a6a76b96e5681da.webp"
+    },
+    {
+      "articleId": 1080614,
+      "articleNo": "116523",
+      "supplierName": "RAMEDER",
+      "supplierId": 173,
+      "articleProductName": "Roof Rack",
+      "productId": 127,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "3a214565670e8151d0bcb5638008a26a253586be.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/173/3a214565670e8151d0bcb5638008a26a253586be.webp"
+    },
+    {
+      "articleId": 1071867,
+      "articleNo": "115908",
+      "supplierName": "RAMEDER",
+      "supplierId": 173,
+      "articleProductName": "Roof Rack",
+      "productId": 127,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "a1b94f3a791e7c123f905f60a355a65a244c41c7.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/173/a1b94f3a791e7c123f905f60a355a65a244c41c7.webp"
+    },
+    {
+      "articleId": 1069721,
+      "articleNo": "115454",
+      "supplierName": "RAMEDER",
+      "supplierId": 173,
+      "articleProductName": "Roof Rack",
+      "productId": 127,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "ee54728299a83b4d1e8820d2bf8eb667540fa5e5.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/173/ee54728299a83b4d1e8820d2bf8eb667540fa5e5.webp"
+    }
+  ]
+}
