@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"gocars-api/config"
+	"gocars-api/database"
 	"gocars-api/models"
 	"gocars-api/services"
 	"net/http"
@@ -27,8 +27,19 @@ func VerifyOtp(c *gin.Context) {
 		return
 	}
 
+	// Fetch user
+	var user models.User
+	if err := database.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
+		return
+	}
+
 	// Mark user as verified
-	config.DB.Model(&models.User{}).Where("email = ?", input.Email).Update("is_verified", true)
+	user.IsVerified = true
+	if err := database.DB.Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user verification"})
+		return
+	}
 
 	// Generate JWT after verification
 	tokenString, _ := services.GenerateJWT(input.Email)
@@ -36,6 +47,13 @@ func VerifyOtp(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Email verified successfully",
 		"token":   tokenString,
+		"user": gin.H{
+			"id":          user.ID,
+			"name":        user.Name,
+			"email":       user.Email,
+			"created_at":  user.CreatedAt,
+			"is_verified": user.IsVerified,
+		},
 	})
 }
 

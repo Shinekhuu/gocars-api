@@ -1,0 +1,62 @@
+{
+  "vehicleId": 10538,
+  "categoryId": 100417,
+  "countArticles": 5,
+  "articles": [
+    {
+      "articleId": 5552698,
+      "articleNo": "ABG999VETR",
+      "supplierName": "DIPASPORT",
+      "supplierId": 4882,
+      "articleProductName": "Control Unit, airbag",
+      "productId": 1384,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "7642baa54463bd31f59d8bbeb623189def89f38d.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/4882/7642baa54463bd31f59d8bbeb623189def89f38d.webp"
+    },
+    {
+      "articleId": 6730350,
+      "articleNo": "EAS-TY-024",
+      "supplierName": "NTY",
+      "supplierId": 6355,
+      "articleProductName": "Clock Spring, airbag",
+      "productId": 4826,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "91015ce8e15732017b3b82d23fb33f08abffe342.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6355/91015ce8e15732017b3b82d23fb33f08abffe342.webp"
+    },
+    {
+      "articleId": 4164559,
+      "articleNo": "632300",
+      "supplierName": "VALEO",
+      "supplierId": 21,
+      "articleProductName": "Retrofit Kit, blind spot assistant",
+      "productId": 9616,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "95446def6bc658bc5c2ab906a99b979e9734dc1f.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/21/95446def6bc658bc5c2ab906a99b979e9734dc1f.webp"
+    },
+    {
+      "articleId": 4164561,
+      "articleNo": "632301",
+      "supplierName": "VALEO",
+      "supplierId": 21,
+      "articleProductName": "Retrofit Kit, blind spot assistant",
+      "productId": 9616,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "15311f5195de61c89773ca8f31610bede4f3eac1.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/21/15311f5195de61c89773ca8f31610bede4f3eac1.webp"
+    },
+    {
+      "articleId": 4164562,
+      "articleNo": "632302",
+      "supplierName": "VALEO",
+      "supplierId": 21,
+      "articleProductName": "Retrofit Kit, blind spot assistant",
+      "productId": 9616,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "1332aaca17063e915178e4f3d74e82d3b6664b8b.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/21/1332aaca17063e915178e4f3d74e82d3b6664b8b.webp"
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "vehicleId": 10538,
+  "categoryId": 100339,
+  "countArticles": 17,
+  "articles": [
+    {
+      "articleId": 620123,
+      "articleNo": "08107",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Aerial",
+      "productId": 46,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "042566860bd68f18773f5ae46e8b97e3e97ca5b3.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/042566860bd68f18773f5ae46e8b97e3e97ca5b3.webp"
+    },
+    {
+      "articleId": 515887,
+      "articleNo": "05924",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Interface, rear view camera recovery",
+      "productId": 60836,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "9ccaeae6270c08b279b641a26a547613dbc56298.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/9ccaeae6270c08b279b641a26a547613dbc56298.webp"
+    },
+    {
+      "articleId": 515783,
+      "articleNo": "05920",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Interface, rear view camera recovery",
+      "productId": 60836,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "70c2205dd0839578bb306146845e524f4703ce90.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/70c2205dd0839578bb306146845e524f4703ce90.webp"
+    },
+    {
+      "articleId": 458331,
+      "articleNo": "04713",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Adapter cable, car radio",
+      "productId": 60819,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "8374443d49af20800fcbedc4561175502be17c73.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/8374443d49af20800fcbedc4561175502be17c73.webp"
+    },
+    {
+      "articleId": 460603,
+      "articleNo": "04794",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Adapter cable, hands-free system",
+      "productId": 60818,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "64c01a626f86b21f595086ab2336b5ecad67b86b.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/64c01a626f86b21f595086ab2336b5ecad67b86b.webp"
+    },
+    {
+      "articleId": 512918,
+      "articleNo": "05805",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Connecting Cable, multimedia interface",
+      "productId": 60205,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "06a3033ea1c6918265df375f8a86ff29daa0799b.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/06a3033ea1c6918265df375f8a86ff29daa0799b.webp"
+    },
+    {
+      "articleId": 514631,
+      "articleNo": "05885",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Multimedia Interface",
+      "productId": 60204,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "d2df318f9bad0d34b9d5a7411b76724c9a77c863.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/d2df318f9bad0d34b9d5a7411b76724c9a77c863.webp"
+    },
+    {
+      "articleId": 635557,
+      "articleNo": "08555",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Adapter, antenna cable",
+      "productId": 7271,
+      "articleMediaType": "PNG",
+      "articleMediaFileName": "cf1737d8d35cedb4ea13bf2e62df7e6429cffd90.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/cf1737d8d35cedb4ea13bf2e62df7e6429cffd90.webp"
+    },
+    {
+      "articleId": 618864,
+      "articleNo": "08088",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Aerial Telescope",
+      "productId": 1357,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "c59e223e1bf4eb264ef85d8ef0118a8649bff960.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/c59e223e1bf4eb264ef85d8ef0118a8649bff960.webp"
+    },
+    {
+      "articleId": 615680,
+      "articleNo": "08009",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Aerial",
+      "productId": 46,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "5a37f05b3c3103984cba20d25b9a4d75d2590acd.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/5a37f05b3c3103984cba20d25b9a4d75d2590acd.webp"
+    },
+    {
+      "articleId": 620067,
+      "articleNo": "08105",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Aerial",
+      "productId": 46,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "28e80231d0818a190211383916f61837a8d787bb.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/28e80231d0818a190211383916f61837a8d787bb.webp"
+    },
+    {
+      "articleId": 618895,
+      "articleNo": "08089",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Aerial",
+      "productId": 46,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "45c1c0f1ac1695d5377eb7c3dc0f563a4be2678d.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/45c1c0f1ac1695d5377eb7c3dc0f563a4be2678d.webp"
+    },
+    {
+      "articleId": 618778,
+      "articleNo": "08085",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Aerial",
+      "productId": 46,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "e9689b25a08283bed84de659999f1ab3d48234a4.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/e9689b25a08283bed84de659999f1ab3d48234a4.webp"
+    },
+    {
+      "articleId": 618820,
+      "articleNo": "08087",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Aerial",
+      "productId": 46,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "ee6fa0c6e9ec5e3a683598a5878e9d0b09d8db3d.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/ee6fa0c6e9ec5e3a683598a5878e9d0b09d8db3d.webp"
+    },
+    {
+      "articleId": 618095,
+      "articleNo": "08067",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Aerial",
+      "productId": 46,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "ebad1157bb78c25b0bc57db38516e37702ad4506.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/ebad1157bb78c25b0bc57db38516e37702ad4506.webp"
+    },
+    {
+      "articleId": 618395,
+      "articleNo": "08075",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Aerial",
+      "productId": 46,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "e1ee9d30ef1d46ce4e71794753e4edfb011af27f.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/e1ee9d30ef1d46ce4e71794753e4edfb011af27f.webp"
+    },
+    {
+      "articleId": 618065,
+      "articleNo": "08065",
+      "supplierName": "PHONOCAR",
+      "supplierId": 6439,
+      "articleProductName": "Aerial",
+      "productId": 46,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "28e80231d0818a190211383916f61837a8d787bb.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6439/28e80231d0818a190211383916f61837a8d787bb.webp"
+    }
+  ]
+}

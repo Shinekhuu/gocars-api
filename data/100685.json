@@ -1,0 +1,106 @@
+{
+  "vehicleId": 10538,
+  "categoryId": 100685,
+  "countArticles": 9,
+  "articles": [
+    {
+      "articleId": 13906382,
+      "articleNo": "A70-85-0037",
+      "supplierName": "ACKOJA",
+      "supplierId": 4364,
+      "articleProductName": "Door Lock",
+      "productId": 1361,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "9bd389c06bc5d1fc2469c657b507ba85581bb40e.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/4364/9bd389c06bc5d1fc2469c657b507ba85581bb40e.webp"
+    },
+    {
+      "articleId": 28499664,
+      "articleNo": "A70-85-0036",
+      "supplierName": "ACKOJA",
+      "supplierId": 4364,
+      "articleProductName": "Door Lock",
+      "productId": 1361,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "9bd389c06bc5d1fc2469c657b507ba85581bb40e.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/4364/9bd389c06bc5d1fc2469c657b507ba85581bb40e.webp"
+    },
+    {
+      "articleId": 21392618,
+      "articleNo": "A70-85-0035",
+      "supplierName": "ACKOJA",
+      "supplierId": 4364,
+      "articleProductName": "Door Lock",
+      "productId": 1361,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "9bd389c06bc5d1fc2469c657b507ba85581bb40e.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/4364/9bd389c06bc5d1fc2469c657b507ba85581bb40e.webp"
+    },
+    {
+      "articleId": 12443453,
+      "articleNo": "A70-85-0034",
+      "supplierName": "ACKOJA",
+      "supplierId": 4364,
+      "articleProductName": "Door Lock",
+      "productId": 1361,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "9bd389c06bc5d1fc2469c657b507ba85581bb40e.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/4364/9bd389c06bc5d1fc2469c657b507ba85581bb40e.webp"
+    },
+    {
+      "articleId": 24358095,
+      "articleNo": "A70-85-0017",
+      "supplierName": "ACKOJA",
+      "supplierId": 4364,
+      "articleProductName": "Tailgate Lock",
+      "productId": 1362,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "9bd389c06bc5d1fc2469c657b507ba85581bb40e.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/4364/9bd389c06bc5d1fc2469c657b507ba85581bb40e.webp"
+    },
+    {
+      "articleId": 161023,
+      "articleNo": "004TY028",
+      "supplierName": "B CAR",
+      "supplierId": 4989,
+      "articleProductName": "Housing, car key",
+      "productId": 9909,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "a5beb8c7e0e23d1620beacdffe1ef5865641e7dc.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/4989/a5beb8c7e0e23d1620beacdffe1ef5865641e7dc.webp"
+    },
+    {
+      "articleId": 57954149,
+      "articleNo": "2310914",
+      "supplierName": "METZGER AUTOTEILE",
+      "supplierId": 94,
+      "articleProductName": "Tailgate Handle",
+      "productId": 1374,
+      "articleMediaType": "JPG",
+      "articleMediaFileName": "8205e9f2e8de244dab021f5c7b1744799b1baf6b.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/94/8205e9f2e8de244dab021f5c7b1744799b1baf6b.webp"
+    },
+    {
+      "articleId": 56234445,
+      "articleNo": "EZC-TY-077",
+      "supplierName": "NTY",
+      "supplierId": 6355,
+      "articleProductName": "Door Lock",
+      "productId": 1361,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "3bb173c6416e877a11f774b550604a4026111638.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6355/3bb173c6416e877a11f774b550604a4026111638.webp"
+    },
+    {
+      "articleId": 6895233,
+      "articleNo": "EZC-TY-013",
+      "supplierName": "NTY",
+      "supplierId": 6355,
+      "articleProductName": "Tailgate Lock",
+      "productId": 1362,
+      "articleMediaType": "JPEG",
+      "articleMediaFileName": "6b3a1e34eba817c33571ff6f60661a137fe622a7.webp",
+      "s3image": "https://fsn1.your-objectstorage.com/tecdoc2025/media_files/images/6355/6b3a1e34eba817c33571ff6f60661a137fe622a7.webp"
+    }
+  ]
+}
