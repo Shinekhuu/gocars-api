@@ -21,27 +21,35 @@ type EngineResponse struct {
 
 type Engine struct {
 	gorm.Model
-	ManufacturerID            int     `json:"manufacturerId"`
-	ModelID                   int     `json:"modelId"`
-	VehicleID                 int     `gorm:"uniqueIndex" json:"vehicleId"`
-	ManufacturerName          string  `json:"manufacturerName"`
-	ModelName                 string  `json:"modelName"`
-	TypeEngineName            string  `json:"typeEngineName"`
-	ConstructionIntervalStart string  `json:"constructionIntervalStart"`
-	ConstructionIntervalEnd   string  `json:"constructionIntervalEnd"`
-	PowerKw                   string  `json:"powerKw"`
-	PowerPs                   string  `json:"powerPs"`
-	CapacityTax               *string `json:"capacityTax"` // nullable
-	FuelType                  string  `json:"fuelType"`
-	BodyType                  string  `json:"bodyType"`
-	NumberOfCylinders         int     `json:"numberOfCylinders"`
-	CapacityLt                string  `json:"capacityLt"`
-	CapacityTech              string  `json:"capacityTech"`
-	EngineCodes               string  `json:"engineCodes"`
-	EngID                     int     `json:"engId"`
+	ManufacturerID            uint           `json:"manufacturerId"`
+	ModelID                   uint           `json:"modelId"`
+	VehicleID                 uint           `gorm:"uniqueIndex" json:"vehicleId"`
+	ManufacturerName          string         `json:"manufacturerName"`
+	ModelName                 string         `json:"modelName"`
+	TypeEngineName            string         `json:"typeEngineName"`
+	ConstructionIntervalStart string         `json:"constructionIntervalStart"`
+	ConstructionIntervalEnd   string         `json:"constructionIntervalEnd"`
+	PowerKw                   string         `json:"powerKw"`
+	PowerPs                   string         `json:"powerPs"`
+	CapacityTax               *string        `json:"capacityTax"` // nullable
+	FuelType                  string         `json:"fuelType"`
+	BodyType                  string         `json:"bodyType"`
+	NumberOfCylinders         int            `json:"numberOfCylinders"`
+	CapacityLt                string         `json:"capacityLt"`
+	CapacityTech              string         `json:"capacityTech"`
+	EngineCodes               string         `json:"engineCodes"`
+	EngID                     uint           `json:"engId"`
+	IsFetched                 bool           `gorm:"type:tinyint(1);default:0"`
+	Families                  []EngineFamily `gorm:"foreignKey:EngineID;constraint:OnDelete:CASCADE;" json:"families"`
 }
 
-func GetEngineByName(manufacturerID int, modelID int, frame string) (*[]Engine, error) {
+type EngineFamily struct {
+	gorm.Model
+	EngineID   uint   `gorm:"column:engine_id" json:"engineId"`
+	FamilyCode string `gorm:"column:family_code;type:varchar(50)" json:"familyCode"`
+}
+
+func GetEngineByName(manufacturerID uint, modelID uint, frame string) (*[]Engine, error) {
 	frame = strings.ToUpper(frame)
 	var dbEngines []Engine
 
@@ -78,10 +86,9 @@ func GetEngineByName(manufacturerID int, modelID int, frame string) (*[]Engine, 
 	}
 
 	return nil, fmt.Errorf("engine not found in DB or RapidAPI for manufacturer %d, model %d, frame %s", manufacturerID, modelID, frame)
-
 }
 
-func GetEnginesFromRapidAPI(ManufacturerID int, ModelID int) (*EngineResponse, error) {
+func GetEnginesFromRapidAPI(ManufacturerID uint, ModelID uint) (*EngineResponse, error) {
 	url := fmt.Sprintf(
 		"https://tecdoc-catalog.p.rapidapi.com/types/type-id/1/list-vehicles-types/%d/lang-id/4/country-filter-id/125",
 		ModelID,
@@ -118,15 +125,32 @@ func GetEnginesFromRapidAPI(ManufacturerID int, ModelID int) (*EngineResponse, e
 	for i := range engineResponse.Engines {
 		engineResponse.Engines[i].ManufacturerID = ManufacturerID
 		engineResponse.Engines[i].ModelID = ModelID
+		engineResponse.Engines[i].IsFetched = true
 	}
 
-	// 3️⃣ Upsert into DB to avoid duplicates (ModelID is unique)
-	if len(engineResponse.Engines) > 0 {
-		database.DB.Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "vehicle_id"}}, // unique key
-			UpdateAll: true,                                  // update all fields if exists
-		}).Create(&engineResponse.Engines)
+	go func() {
+		// 3️⃣ Upsert into DB to avoid duplicates (ModelID is unique)
+		if len(engineResponse.Engines) > 0 {
+			database.DB.Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "vehicle_id"}}, // unique key
+				UpdateAll: true,                                  // update all fields if exists
+			}).Create(&engineResponse.Engines)
+		}
+	}()
+
+	return &engineResponse, nil
+}
+
+func GetEnginesByModelId(modelID uint) (*EngineResponse, error) {
+	// 1️⃣ Try to load from database
+	var engineResponse EngineResponse
+	if err := database.DB.Where("model_id = ? AND is_fetched = ?", modelID, true).Find(&engineResponse.Engines).Error; err != nil {
+		return nil, err
 	}
 
+	// 2️⃣ Set count
+	engineResponse.CountModelTypes = len(engineResponse.Engines)
+
+	// 3️⃣ Return result (even if empty)
 	return &engineResponse, nil
 }

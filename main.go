@@ -7,6 +7,7 @@ import (
 	"gocars-api/database"
 	"gocars-api/middleware"
 	"gocars-api/models"
+	"gocars-api/scraper"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -22,12 +23,43 @@ func main() {
 
 	// Auto-migrate models here
 	if err := database.DB.AutoMigrate(
+		&models.Category{},
+		&models.Oem{},
+		&models.Xyr{},
 		&models.User{},
 		&models.Otp{},
-		&models.Xyr{},
 		&models.Manufacturer{},
 		&models.Model{},
+		&models.EngineFamily{},
+		&models.ModelFamily{},
+		&models.ArticleAllSpecification{},
+		&models.ArticleVehicles{},
+	); err != nil {
+		log.Fatal("Failed to migrate database:", err)
+	}
+
+	// Auto-migrate models here
+	if err := database.DB.AutoMigrate(
 		&models.Engine{},
+		&models.ArticleOem{},
+		&models.ArticleCategory{},
+	); err != nil {
+		log.Fatal("Failed to migrate database:", err)
+	}
+
+	// Auto-migrate models here
+	if err := database.DB.AutoMigrate(
+		&models.ArticleItem{},
+		&models.XyrVehicle{},
+	); err != nil {
+		log.Fatal("Failed to migrate database:", err)
+	}
+
+	// Auto-migrate models here
+	if err := database.DB.AutoMigrate(
+		&models.OrderItem{},
+		&models.Invoice{},
+		&models.Order{},
 	); err != nil {
 		log.Fatal("Failed to migrate database:", err)
 	}
@@ -48,21 +80,28 @@ func main() {
 	router.POST("/verify-otp", controllers.VerifyOtp)
 	router.POST("/resend-otp", controllers.ResendOtp)
 
-	router.GET("/manufactures", controllers.GetManufacturers)
+	router.GET("/manufacturers", controllers.GetManufacturers)
 	router.GET("/model", controllers.GetModels)
 	router.GET("/engine", controllers.GetEngines)
 
-	router.GET("/crawler", controllers.Garage)
+	router.GET("/vehicle", controllers.FetchData)
 	router.GET("/search", controllers.SearchOEM)
 	router.GET("/shop", controllers.Shop)
 
 	router.GET("/decode", controllers.Decode)
-	router.POST("/vehicle", controllers.GetXyrData)
+
+	router.GET("/partsouq", scraper.FetchVehicleInfoPartsouq)
+
+	router.GET("/article-seeder", controllers.FillArticleItemData)
+	router.GET("/article", controllers.Article)
+
+	router.GET("/category-seeder", controllers.FillCategories)
 
 	// Protected routes
 	authorized := router.Group("/")
 	authorized.Use(middleware.AuthRequired())
 	authorized.GET("/profile", controllers.Profile)
+	authorized.POST("/order", controllers.CreateOrder)
 
 	router.Run(":9000")
 }

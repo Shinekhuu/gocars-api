@@ -8,7 +8,7 @@ import (
 
 type Manufacturer struct {
 	gorm.Model
-	ManufacturerID   int    `gorm:"uniqueIndex" json:"manufacturerId"`
+	ManufacturerID   uint   `gorm:"uniqueIndex" json:"manufacturerId"`
 	ManufacturerName string `json:"manufacturerName"`
 }
 

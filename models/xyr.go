@@ -81,36 +81,44 @@ func (i *IntFromFloat) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// 🟩 Xyr model
 type Xyr struct {
 	gorm.Model
-	PlateNumber   string      `gorm:"column:plate_number;type:varchar(20);unique"`
-	CabinNumber   string      `gorm:"column:cabin_number;type:varchar(20)"`
-	CountryName   string      `gorm:"column:country_name;type:varchar(50)"`
-	MarkName      string      `gorm:"column:mark_name;type:varchar(50)"`
-	ModelName     string      `gorm:"column:model_name;type:varchar(50)"`
-	BuildYear     int         `gorm:"column:build_year"`
-	ColorName     string      `gorm:"column:color_name;type:varchar(50)"`
-	Type          string      `gorm:"column:type;type:varchar(50)"`
-	OwnerType     string      `gorm:"column:owner_type;type:varchar(50)"`
-	Intent        *string     `gorm:"column:intent;type:varchar(255);default:NULL"`
-	ClassName     string      `gorm:"column:class_name;type:varchar(10)"`
-	MotorNumber   *string     `gorm:"column:motor_number;type:varchar(50);default:NULL"`
-	ImportDate    *CustomTime `json:"importDate" gorm:"type:date"` // DATE type
-	FuelType      string      `gorm:"column:fuel_type;type:varchar(50)"`
-	ManCount      int         `gorm:"column:man_count"`
-	AxleCount     int         `gorm:"column:axle_count"`
+	PlateNumber   string      `gorm:"column:plate_number;type:varchar(20);uniqueIndex" json:"plateNumber"`
+	CabinNumber   string      `json:"cabinNumber"`
+	CountryName   string      `json:"countryName"`
+	MarkName      string      `json:"markName"`
+	ModelName     string      `json:"modelName"`
+	BuildYear     int         `json:"buildYear"`
+	ColorName     string      `json:"colorName"`
+	Type          string      `json:"type"`
+	OwnerType     string      `json:"ownerType"`
+	Intent        *string     `json:"intent"`
+	ClassName     string      `json:"className"`
+	MotorNumber   *string     `json:"motorNumber"`
+	ImportDate    *CustomTime `json:"importDate"`
+	FuelType      string      `json:"fuelType"`
+	ManCount      int         `json:"manCount"`
+	AxleCount     int         `json:"axleCount"`
 	Capacity      float64     `json:"capacity"`
 	Mass          float64     `json:"mass"`
 	Weight        float64     `json:"weight"`
 	Length        float64     `json:"length"`
 	Width         float64     `json:"width"`
 	Height        float64     `json:"height"`
-	Transmission  *string     `gorm:"column:transmission;type:varchar(50);default:NULL"`
-	WheelPosition string      `gorm:"column:wheel_position;type:varchar(50)"`
-	RFID          *string     `gorm:"column:rfid;type:varchar(50);default:NULL"`
+	Transmission  *string     `json:"transmission"`
+	WheelPosition string      `json:"wheelPosition"`
+	RFID          *string     `json:"rfid"`
 }
 
-// Optional: TableName overrides default table name
-func (Xyr) TableName() string {
-	return "xyr"
+type XyrVehicle struct {
+	gorm.Model
+	XyrID     uint
+	VehicleID uint
+
+	Xyr    Xyr    `gorm:"foreignKey:XyrID;references:ID;constraint:OnDelete:CASCADE;"`
+	Engine Engine `gorm:"foreignKey:VehicleID;references:VehicleID;constraint:OnDelete:CASCADE;"`
 }
+
+func (Xyr) TableName() string        { return "xyrs" }
+func (XyrVehicle) TableName() string { return "xyr_vehicles" }

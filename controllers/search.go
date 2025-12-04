@@ -1,11 +1,8 @@
 package controllers
 
 import (
-	"encoding/json"
 	"gocars-api/models"
-	"io"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -33,54 +30,40 @@ func SearchOEM(c *gin.Context) {
 		return
 	}
 
-	url := "https://tecdoc-catalog.p.rapidapi.com/articles-oem/search-by-article-oem-no/lang-id/4/article-oem-no/" + oem
+	// Try reading from DB first
+	articles, total, err := models.GetArticleItemsByOem(oem, page, limit)
+	if err == nil && total > 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"page":     page,
+			"limit":    limit,
+			"total":    total,
+			"articles": articles,
+		})
+		return
+	}
 
-	req, err := http.NewRequest("GET", url, nil)
+	// Otherwise, fetch from API
+	var apiArticles []models.ArticleItem
+	apiArticles, err = models.GetArticleItemsByOemFromRapidAPI(oem)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error creating request"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Set headers
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-rapidapi-key", os.Getenv("X_RAPIDAPI_KEY"))
-	req.Header.Set("x-rapidapi-host", os.Getenv("X_RAPIDAPI_HOST"))
-
-	// Send request
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error sending request"})
-		return
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error reading response"})
-		return
-	}
-
-	var articles models.ArticleList
-	if err := json.Unmarshal(body, &articles); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing JSON", "raw": string(body)})
-		return
-	}
-
-	// Pagination logic
+	// Apply pagination manually (API returns full list)
 	start := (page - 1) * limit
 	end := start + limit
-	if start > len(articles) {
-		start = len(articles)
+	if start > len(apiArticles) {
+		start = len(apiArticles)
 	}
-	if end > len(articles) {
-		end = len(articles)
+	if end > len(apiArticles) {
+		end = len(apiArticles)
 	}
-	paginatedArticles := articles[start:end]
 
 	c.JSON(http.StatusOK, gin.H{
 		"page":     page,
 		"limit":    limit,
-		"total":    len(articles),
-		"articles": paginatedArticles,
+		"total":    len(apiArticles),
+		"articles": apiArticles[start:end],
 	})
 }
