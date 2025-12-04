@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"gocars-api/database"
 	"gocars-api/models"
 	"gocars-api/utils"
 	"net/http"
@@ -11,25 +10,26 @@ import (
 
 func GetModels(c *gin.Context) {
 	// vehicle_id := c.DefaultQuery("vehicle_id", "10538")
-	manufacturerID := c.DefaultQuery("manufacturer_id", "100260")
+	manufacturerID := utils.AtoiUint(c.DefaultQuery("manufacturer_id", "100260"))
 
 	// 1️⃣ Try to load from database
-	var dbModels []models.Model
-	if err := database.DB.Where("manufacturer_id = ?", manufacturerID).Find(&dbModels).Error; err != nil {
+	modelResponse, err := models.GetModelsByManufacturerId(manufacturerID)
+
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database query failed"})
 		return
 	}
 
 	// 2️⃣ If found in DB, return immediately
-	if len(dbModels) > 0 {
+	if modelResponse.CountModels > 0 {
 		c.JSON(http.StatusOK, gin.H{
-			"total":  len(dbModels),
-			"models": dbModels,
+			"total":  modelResponse.CountModels,
+			"models": modelResponse.Models,
 		})
 		return
 	}
 
-	modelResponse, err := models.GetModelsFromRapidAPI(utils.Atoi(manufacturerID))
+	modelResponse, err = models.GetModelsFromRapidAPI(manufacturerID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch models"})
