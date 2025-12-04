@@ -21,14 +21,21 @@ type ModelResponse struct {
 
 type Model struct {
 	gorm.Model
-	ManufacturerID int     `json:"manufacturerId"`
-	ModelID        int     `gorm:"uniqueIndex" json:"modelId"` // unique constraint
-	ModelName      string  `json:"modelName"`
-	ModelYearFrom  string  `json:"modelYearFrom"`
-	ModelYearTo    *string `json:"modelYearTo"` // nullable field (can be null)
+	ManufacturerID uint          `json:"manufacturerId"`
+	ModelID        uint          `gorm:"uniqueIndex" json:"modelId"` // unique constraint
+	ModelName      string        `json:"modelName"`
+	Families       []ModelFamily `gorm:"foreignKey:ModelID" json:"families"`
+	ModelYearFrom  string        `json:"modelYearFrom"`
+	ModelYearTo    *string       `json:"modelYearTo"` // nullable field (can be null)
 }
 
-func GetModelByName(manufacturerID int, modelName string, buildDate string) (*Model, error) {
+type ModelFamily struct {
+	gorm.Model
+	ModelID    uint   `gorm:"column:model_id" json:"modelId"`
+	FamilyCode string `gorm:"column:family_code;type:varchar(50)" json:"familyCode"`
+}
+
+func GetModelByName(manufacturerID uint, modelName string, buildDate string) (*Model, error) {
 	var dbModel Model
 	modelName = strings.ToUpper(modelName)
 	modelName = utils.SplitModelName(modelName)
@@ -67,7 +74,7 @@ func GetModelByName(manufacturerID int, modelName string, buildDate string) (*Mo
 	return nil, fmt.Errorf("model not found in DB or RapidAPI for manufacturer %d and name %s", manufacturerID, modelName)
 }
 
-func GetModelsFromRapidAPI(manufacturerID int) (*ModelResponse, error) {
+func GetModelsFromRapidAPI(manufacturerID uint) (*ModelResponse, error) {
 	url := fmt.Sprintf(
 		"https://tecdoc-catalog.p.rapidapi.com/models/list/type-id/1/manufacturer-id/%d/lang-id/4/country-filter-id/125",
 		manufacturerID,
@@ -113,5 +120,19 @@ func GetModelsFromRapidAPI(manufacturerID int) (*ModelResponse, error) {
 		}).Create(&modelResponse.Models)
 	}
 
+	return &modelResponse, nil
+}
+
+func GetModelsByManufacturerId(manufacturerID uint) (*ModelResponse, error) {
+	// 1️⃣ Try to load from database
+	var modelResponse ModelResponse
+	if err := database.DB.Where("manufacturer_id = ?", manufacturerID).Find(&modelResponse.Models).Error; err != nil {
+		return nil, err
+	}
+
+	// 2️⃣ Set count
+	modelResponse.CountModels = len(modelResponse.Models)
+
+	// 3️⃣ Return result (even if empty)
 	return &modelResponse, nil
 }
