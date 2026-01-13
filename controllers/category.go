@@ -1,18 +1,24 @@
 package controllers
 
 import (
+	"context"
+	"gocars-api/database"
 	"gocars-api/models"
+	"log"
 
 	"github.com/gin-gonic/gin"
 )
 
 func FillCategories(c *gin.Context) {
-	file := "/home/ubuntu/project-go/gocars-api/data/categories.json"
+	jsonPath := "/home/api/data/categories.json"
 
-	if err := models.SeedCategories(file); err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
+	go func() {
+		if err := models.SeedCategoriesFromFile(context.Background(), database.DB, jsonPath); err != nil {
+			log.Printf("Error seeding categories: %v\n", err)
+		} else {
+			log.Println("Categories imported successfully")
+		}
+	}()
 
-	c.JSON(200, gin.H{"message": "Categories imported successfully!"})
+	c.JSON(200, gin.H{"message": "Seeding started in background"})
 }

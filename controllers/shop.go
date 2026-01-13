@@ -41,6 +41,7 @@ func Shop(c *gin.Context) {
 			"limit":    limit,
 			"total":    total,
 			"articles": articles,
+			"api":      "db",
 		})
 		return
 	}
@@ -67,12 +68,13 @@ func Shop(c *gin.Context) {
 		"limit":    limit,
 		"total":    len(apiData.Articles),
 		"articles": apiData.Articles[start:end],
+		"api":      "api",
 	})
 }
 
 func FillArticleItemData(c *gin.Context) {
 	fileName := c.DefaultQuery("filename", "100001.json")
-	filePath := "/home/ubuntu/project-go/gocars-api/data/" + fileName
+	filePath := "/home/api/data/" + fileName
 
 	// 1️⃣ Read JSON file
 	file, err := os.Open(filePath)
@@ -94,84 +96,87 @@ func FillArticleItemData(c *gin.Context) {
 
 	fmt.Printf("Found %d articles in JSON\n", len(data.Articles))
 
-	// 3️⃣ Ensure Vehicle exists
-	var engine models.Engine
-	if err := database.DB.
-		Where(models.Engine{VehicleID: data.VehicleID}).
-		Assign(engine).
-		FirstOrCreate(&engine).Error; err != nil {
-		log.Fatalf("failed to upsert vehicle %v: %v", data.VehicleID, err)
-	}
-
-	// 4️⃣ Upsert ArticleItems (1-by-1)
-	for i := range data.Articles {
-		article := &data.Articles[i]
+	go func() {
+		// 3️⃣ Ensure Vehicle exists
+		var engine models.Engine
 		if err := database.DB.
-			Where(models.ArticleItem{ArticleID: article.ArticleID}).
-			Assign(article).
-			FirstOrCreate(article).Error; err != nil {
-			log.Printf("❌ Failed to upsert article %v: %v", article.ArticleID, err)
+			Where(models.Engine{VehicleID: data.VehicleID}).
+			Assign(engine).
+			FirstOrCreate(&engine).Error; err != nil {
+			log.Fatalf("failed to upsert vehicle %v: %v", data.VehicleID, err)
 		}
-	}
 
-	// 5️⃣ Batch upsert ArticleVehicles (link articles to vehicle)
-	var articleVehicles []models.ArticleVehicles
-	for _, article := range data.Articles {
-		articleVehicles = append(articleVehicles, models.ArticleVehicles{
-			VehicleID: data.VehicleID,
-			ArticleID: article.ArticleID,
-		})
-	}
-
-	batchSize := 500
-	for i := 0; i < len(articleVehicles); i += batchSize {
-		end := i + batchSize
-		if end > len(articleVehicles) {
-			end = len(articleVehicles)
-		}
-		batch := articleVehicles[i:end]
-
-		if err := database.DB.Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "vehicle_id"}, {Name: "article_id"}},
-			DoNothing: true, // skip duplicates
-		}).Create(&batch).Error; err != nil {
-			log.Printf("❌ Failed to batch upsert VehicleArticles: %v", err)
-		}
-	}
-
-	// 6️⃣ Batch upsert ArticleCategory
-	var articleCategories []models.ArticleCategory
-	for _, article := range data.Articles {
-		// Use VehicleArticlesResponse.CategoryID if exists, otherwise loop article.AllCategories
-		if data.CategoryID != 0 {
-			articleCategories = append(articleCategories, models.ArticleCategory{
-				ArticleID:  article.ArticleID,
-				CategoryID: data.CategoryID,
-			})
-		} else {
-			for _, cat := range article.AllCategories {
-				articleCategories = append(articleCategories, models.ArticleCategory{
-					ArticleID:  article.ArticleID,
-					CategoryID: cat.CategoryID,
-				})
+		// 4️⃣ Upsert ArticleItems (1-by-1)
+		for i := range data.Articles {
+			article := &data.Articles[i]
+			if err := database.DB.
+				Where(models.ArticleItem{ArticleID: article.ArticleID}).
+				Assign(article).
+				FirstOrCreate(article).Error; err != nil {
+				log.Printf("❌ Failed to upsert article %v: %v", article.ArticleID, err)
 			}
 		}
-	}
 
-	for i := 0; i < len(articleCategories); i += batchSize {
-		end := i + batchSize
-		if end > len(articleCategories) {
-			end = len(articleCategories)
+		// 5️⃣ Batch upsert ArticleVehicles (link articles to vehicle)
+		var articleVehicles []models.ArticleVehicles
+		for _, article := range data.Articles {
+			articleVehicles = append(articleVehicles, models.ArticleVehicles{
+				VehicleID: data.VehicleID,
+				ArticleID: article.ArticleID,
+			})
 		}
-		batch := articleCategories[i:end]
 
-		if err := database.DB.Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "article_id"}, {Name: "category_id"}},
-			DoNothing: true, // skip duplicates
-		}).Create(&batch).Error; err != nil {
-			log.Printf("❌ Failed to batch upsert ArticleCategories: %v", err)
+		batchSize := 500
+		for i := 0; i < len(articleVehicles); i += batchSize {
+			end := i + batchSize
+			if end > len(articleVehicles) {
+				end = len(articleVehicles)
+			}
+			batch := articleVehicles[i:end]
+
+			if err := database.DB.Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "vehicle_id"}, {Name: "article_id"}},
+				DoNothing: true, // skip duplicates
+			}).Create(&batch).Error; err != nil {
+				log.Printf("❌ Failed to batch upsert VehicleArticles: %v", err)
+			}
 		}
-	}
+
+		// 6️⃣ Batch upsert ArticleCategory
+		var articleCategories []models.ArticleCategory
+		for _, article := range data.Articles {
+			// Use VehicleArticlesResponse.CategoryID if exists, otherwise loop article.AllCategories
+			if data.CategoryID != 0 {
+				articleCategories = append(articleCategories, models.ArticleCategory{
+					ArticleID:  article.ArticleID,
+					CategoryID: data.CategoryID,
+				})
+			} else {
+				for _, cat := range article.AllCategories {
+					articleCategories = append(articleCategories, models.ArticleCategory{
+						ArticleID:  article.ArticleID,
+						CategoryID: cat.CategoryID,
+					})
+				}
+			}
+		}
+
+		for i := 0; i < len(articleCategories); i += batchSize {
+			end := i + batchSize
+			if end > len(articleCategories) {
+				end = len(articleCategories)
+			}
+			batch := articleCategories[i:end]
+
+			if err := database.DB.Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "article_id"}, {Name: "category_id"}},
+				DoNothing: true, // skip duplicates
+			}).Create(&batch).Error; err != nil {
+				log.Printf("❌ Failed to batch upsert ArticleCategories: %v", err)
+			}
+		}
+
+	}()
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("✅ %d articles associated with vehicle %d!", len(data.Articles), data.VehicleID),

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"gocars-api/database"
 	"gocars-api/models"
@@ -11,6 +12,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/mailgun/mailgun-go/v4"
 	"gopkg.in/mail.v2"
 	"gorm.io/gorm"
 )
@@ -57,7 +59,7 @@ func GenerateAndSendOtp(email string) error {
 	}
 
 	// Send email
-	if err := sendOtpEmail(email, verificationCode); err != nil {
+	if err := sendOtpEmailUsingAPI(email, verificationCode); err != nil {
 		log.Printf("[OTP] Failed to send OTP email to %s: %v", email, err)
 		return err
 	}
@@ -66,7 +68,50 @@ func GenerateAndSendOtp(email string) error {
 	return nil
 }
 
-// sendOtpEmail sends the OTP email using SMTP with retries
+// sendOtpEmailUsingAPI sends the OTP email using Mailgun API
+func sendOtpEmailUsingAPI(email, code string) error {
+	apiKey := os.Getenv("MAILGUN_SENDING_API_KEY")
+	domain := "support.gocars.mn"
+
+	mg := mailgun.NewMailgun(domain, apiKey)
+
+	// Create HTML email body
+	body := fmt.Sprintf(`
+		<!DOCTYPE html>
+		<html>
+		<body>
+			<p>Hello Dear,</p>
+			<p>Your verification code is: <strong>%s</strong></p>
+			<p>This code will expire in 10 minutes.</p>
+			<p>Thank you,<br>Go Cars LLC</p>
+		</body>
+		</html>
+	`, code)
+
+	// Use package-level NewMessage function
+	m := mailgun.NewMessage(
+		"Go Cars LLC <no-reply@support.gocars.mn>", // From
+		"Your Verification Code",                   // Subject
+		"",                                         // Plain text fallback (can be empty)
+		email,                                      // To
+	)
+
+	// Set the HTML body
+	m.SetHTML(body)
+
+	// Send the email with timeout context
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	resp, id, err := mg.Send(ctx, m)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Email sent successfully! ID:", id, "Response:", resp)
+	return nil
+}
+
 func sendOtpEmail(email, code string) error {
 	username := os.Getenv("SMTP_USERNAME")
 	port, err := strconv.Atoi(os.Getenv("SMTP_PORT"))

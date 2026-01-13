@@ -113,35 +113,45 @@ func GetArticleItemsByVehicleIdAndCategoryId(vehicleID uint, categoryID uint, pa
 	var dbArticleItems []ArticleItem
 	var total int64
 
-	// Count total items for pagination
+	// 1️⃣ Count total items for pagination
 	if err := database.DB.
-		Table("article_vehicles").
-		Select("article_items.id").
-		Joins("LEFT JOIN article_categories ON article_vehicles.article_id = article_categories.article_id").
-		Joins("LEFT JOIN article_items ON article_vehicles.article_id = article_items.article_id").
-		Where("article_vehicles.vehicle_id = ? AND article_categories.category_id = ?", vehicleID, categoryID).
-		Group("article_vehicles.article_id").
-		Count(&total).Error; err != nil {
+		Table("article_categories AS ac").
+		Joins("INNER JOIN article_vehicles AS av ON av.article_id = ac.article_id").
+		Where("ac.category_id = ? AND av.vehicle_id = ?", categoryID, vehicleID).
+		Select("COUNT(DISTINCT av.article_id)").
+		Scan(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Pagination logic
+	// 2️⃣ Pagination logic
 	offset := (page - 1) * limit
 
-	// Fetch paginated records
+	// 3️⃣ First, fetch article IDs only
+	var articleIDs []uint
 	if err := database.DB.
-		Table("article_vehicles").
-		Select("article_items.*, GROUP_CONCAT(oems.display_no SEPARATOR ', ') AS article_search_no").
-		Joins("LEFT JOIN article_categories ON article_vehicles.article_id = article_categories.article_id").
-		Joins("LEFT JOIN article_items ON article_vehicles.article_id = article_items.article_id").
-		Joins("LEFT JOIN article_oems ON article_vehicles.article_id = article_oems.article_id").
-		Joins("LEFT JOIN oems ON article_oems.oem_id = oems.id").
-		Where("article_vehicles.vehicle_id = ? AND article_categories.category_id = ?", vehicleID, categoryID).
-		Group("article_vehicles.article_id").
+		Table("article_categories AS ac").
+		Select("DISTINCT ac.article_id").
+		Joins("INNER JOIN article_vehicles AS av ON av.article_id = ac.article_id").
+		Where("ac.category_id = ? AND av.vehicle_id = ?", categoryID, vehicleID).
+		Order("ac.article_id DESC").
 		Limit(limit).
 		Offset(offset).
-		Find(&dbArticleItems).Error; err != nil {
+		Pluck("ac.article_id", &articleIDs).Error; err != nil {
 		return nil, 0, err
+	}
+
+	// 4️⃣ Fetch article details + OEMs only for these IDs
+	if len(articleIDs) > 0 {
+		if err := database.DB.
+			Table("article_items AS ai").
+			Select("ai.*, GROUP_CONCAT(DISTINCT o.display_no SEPARATOR ', ') AS article_search_no").
+			Joins("LEFT JOIN article_oems AS ao ON ai.article_id = ao.article_id").
+			Joins("LEFT JOIN oems AS o ON ao.oem_id = o.id").
+			Where("ai.article_id IN ?", articleIDs).
+			Group("ai.article_id").
+			Find(&dbArticleItems).Error; err != nil {
+			return nil, 0, err
+		}
 	}
 
 	return &dbArticleItems, total, nil
