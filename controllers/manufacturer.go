@@ -30,7 +30,7 @@ func GetManufacturers(c *gin.Context) {
 
 func FillData(c *gin.Context) {
 	// 1. Read JSON file
-	file, err := os.Open("/home/ubuntu/project-go/gocars-api/data/manufactures.json")
+	file, err := os.Open("/home/api/data/manufactures.json")
 	if err != nil {
 		log.Fatal("failed to open JSON file:", err)
 	}
