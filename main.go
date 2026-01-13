@@ -7,7 +7,6 @@ import (
 	"gocars-api/database"
 	"gocars-api/middleware"
 	"gocars-api/models"
-	"gocars-api/scraper"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -15,6 +14,8 @@ import (
 )
 
 func main() {
+	gin.SetMode(gin.ReleaseMode)
+
 	err := godotenv.Load("/home/ubuntu/project-go/gocars-api/.env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -57,14 +58,20 @@ func main() {
 
 	// Auto-migrate models here
 	if err := database.DB.AutoMigrate(
+		&models.Order{},
 		&models.OrderItem{},
 		&models.Invoice{},
-		&models.Order{},
 	); err != nil {
 		log.Fatal("Failed to migrate database:", err)
 	}
 
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.Logger())   // keep logs (recommended)
+	router.Use(gin.Recovery()) // crash protection
+
+	// ✅ Trusted proxies (important for production)
+	router.SetTrustedProxies(nil)
+
 	// Configure CORS
 	config := cors.Config{
 		AllowOrigins:     []string{"https://gocars.mn", "http://localhost:5173"}, // your frontend domain
@@ -81,6 +88,7 @@ func main() {
 	router.POST("/resend-otp", controllers.ResendOtp)
 
 	router.GET("/manufacturers", controllers.GetManufacturers)
+	// router.GET("/manufacturers-seeder", controllers.FillData)
 	router.GET("/model", controllers.GetModels)
 	router.GET("/engine", controllers.GetEngines)
 
@@ -88,14 +96,14 @@ func main() {
 	router.GET("/search", controllers.SearchOEM)
 	router.GET("/shop", controllers.Shop)
 
-	router.GET("/decode", controllers.Decode)
+	// router.GET("/decode", controllers.Decode)
 
-	router.GET("/partsouq", scraper.FetchVehicleInfoPartsouq)
+	// router.GET("/partsouq", scraper.FetchVehicleInfoPartsouq)
 
-	router.GET("/article-seeder", controllers.FillArticleItemData)
+	// router.GET("/article-seeder", controllers.FillArticleItemData)
 	router.GET("/article", controllers.Article)
 
-	router.GET("/category-seeder", controllers.FillCategories)
+	// router.GET("/category-seeder", controllers.FillCategories)
 
 	// Protected routes
 	authorized := router.Group("/")
