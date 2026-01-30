@@ -14,7 +14,27 @@ import (
 )
 
 func main() {
+	// For Production
 	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
+	router.Use(gin.Logger())   // keep logs (recommended)
+	router.Use(gin.Recovery()) // crash protection
+
+	// For Development
+	// gin.SetMode(gin.DebugMode)
+	// router := gin.Default()
+
+	// ✅ Trusted proxies (important for production)
+	router.SetTrustedProxies(nil)
+
+	// Configure CORS
+	config := cors.Config{
+		AllowOrigins:     []string{"https://gocars.mn", "http://localhost:5173"}, // your frontend domain
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}
+	router.Use(cors.New(config))
 
 	err := godotenv.Load("/home/ubuntu/project-go/gocars-api/.env")
 	if err != nil {
@@ -64,22 +84,6 @@ func main() {
 	); err != nil {
 		log.Fatal("Failed to migrate database:", err)
 	}
-
-	router := gin.New()
-	router.Use(gin.Logger())   // keep logs (recommended)
-	router.Use(gin.Recovery()) // crash protection
-
-	// ✅ Trusted proxies (important for production)
-	router.SetTrustedProxies(nil)
-
-	// Configure CORS
-	config := cors.Config{
-		AllowOrigins:     []string{"https://gocars.mn", "http://localhost:5173"}, // your frontend domain
-		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		AllowCredentials: true,
-	}
-	router.Use(cors.New(config))
 
 	router.GET("/", func(c *gin.Context) { c.JSON(200, gin.H{"message": "Welcome"}) })
 	router.POST("/signin", controllers.SignIn)
