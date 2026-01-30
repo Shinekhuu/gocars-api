@@ -164,10 +164,13 @@ func GetArticleItemsByOem(oem string, page int, limit int) (*[]ArticleItem, int6
 	// Count total items for pagination
 	if err := database.DB.
 		Table("oems").
-		Select("article_items.id").
 		Joins("LEFT JOIN article_oems ON oems.id = article_oems.oem_id").
 		Joins("LEFT JOIN article_items ON article_oems.article_id = article_items.article_id").
-		Where("oems.display_no = ?", oem).
+		Where(
+			"UPPER(REGEXP_REPLACE(oems.display_no, '[^A-Za-z0-9]', '')) = "+
+				"UPPER(REGEXP_REPLACE(?, '[^A-Za-z0-9]', ''))",
+			oem,
+		).
 		Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
@@ -181,7 +184,11 @@ func GetArticleItemsByOem(oem string, page int, limit int) (*[]ArticleItem, int6
 		Select("article_items.*").
 		Joins("LEFT JOIN article_oems ON oems.id = article_oems.oem_id").
 		Joins("LEFT JOIN article_items ON article_oems.article_id = article_items.article_id").
-		Where("oems.display_no = ?", oem).
+		Where(
+			"UPPER(REGEXP_REPLACE(oems.display_no, '[^A-Za-z0-9]', '')) = "+
+				"UPPER(REGEXP_REPLACE(?, '[^A-Za-z0-9]', ''))",
+			oem,
+		).
 		Limit(limit).
 		Offset(offset).
 		Find(&dbArticleItems).Error; err != nil {
