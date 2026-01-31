@@ -1,13 +1,26 @@
-image: golang:1.24
+image: ubuntu:22.04
 
 stages:
   - build
   - deploy
-
+  
 variables:
+  GO_VERSION: "1.25.0"
+  CGO_ENABLED: "0"
+  GOOS: linux
+  GOARCH: amd64
   APP_NAME: gocars-api
   APP_DIR: "/home/api"
   SERVICE_NAME: gocars-api   # systemd service name
+
+before_script:
+  - apt-get update
+  - apt-get install -y wget ca-certificates openssh-client
+  - wget -q https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz
+  - tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
+  - export PATH=$PATH:/usr/local/go/bin
+  - go version
+  - go mod download
 
 build:
   stage: build
@@ -15,8 +28,6 @@ build:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
   script:
-    - go version
-    - go mod download
     - go build -o $APP_NAME
   artifacts:
     paths:
