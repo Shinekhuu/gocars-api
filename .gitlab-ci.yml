@@ -1,26 +1,18 @@
-image: golang:1.24
-
 stages:
   - build
   - deploy
 
 variables:
-  GO_VERSION: "1.25.0"
-  CGO_ENABLED: "0"
-  GOOS: linux
-  GOARCH: amd64
   APP_NAME: gocars-api
   APP_DIR: "/home/api"
   SERVICE_NAME: gocars-api   # systemd service name
-
-before_script:
-  - go version
-  - go mod download
 
 build:
   stage: build
   tags: ["shell"]
   script:
+    - go version
+    - go mod download
     - go build -o $APP_NAME
   artifacts:
     paths:
