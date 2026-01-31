@@ -38,18 +38,29 @@ deploy:
   tags: ["shell"]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-  script:
-    - echo "Setup SSH"
+  before_script:
+    - echo "Setting up SSH..."
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
-    - ssh-keyscan $DEPLOY_HOST >> ~/.ssh/known_hosts
-    - echo "Deploy to server"
+    - |
+      if [ -z "$DEPLOY_HOST" ]; then
+        echo "Error: DEPLOY_HOST is not set"
+        exit 1
+      fi
+    - ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
+  script:
+    - echo "Deploying $APP_NAME to $DEPLOY_HOST..."
     - scp $APP_NAME $DEPLOY_USER@$DEPLOY_HOST:$APP_DIR/$APP_NAME.new
     - |
       ssh $DEPLOY_USER@$DEPLOY_HOST "
-        export ENV_PATH=$ENV_PATH
-        sudo install -o root -g root -m 755 \
-          $APP_DIR/$APP_NAME.new $APP_DIR/$APP_NAME
+        set -e
+
+        # Atomic install: set owner to deploy user and permissions
+        sudo install -o root -g root -m 755 $APP_DIR/$APP_NAME.new $APP_DIR/$APP_NAME
+
+        # Restart systemd service
+        sudo systemctl daemon-reload
         sudo systemctl restart $SERVICE_NAME
+        sudo systemctl status $SERVICE_NAME --no-pager
       "

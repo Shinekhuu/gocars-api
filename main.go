@@ -18,12 +18,8 @@ func main() {
 	// ===============================
 	// Environment
 	// ===============================
-	envPath := os.Getenv("ENV_PATH")
-	if envPath == "" {
-		envPath = "/home/api/.env" // default
-	}
-	if err := godotenv.Load(envPath); err != nil {
-		log.Fatalf("Error loading .env file from %s: %v", envPath, err)
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file loaded, using environment variables")
 	}
 
 	// ===============================
