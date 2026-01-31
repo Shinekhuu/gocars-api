@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"gocars-api/controllers"
 	"gocars-api/database"
@@ -14,18 +15,38 @@ import (
 )
 
 func main() {
-	// For Production
-	gin.SetMode(gin.ReleaseMode)
-	router := gin.New()
-	router.Use(gin.Logger())   // keep logs (recommended)
-	router.Use(gin.Recovery()) // crash protection
+	// ===============================
+	// Environment
+	// ===============================
+	envPath := os.Getenv("ENV_PATH")
+	if envPath == "" {
+		envPath = "/home/ubuntu/project-go/gocars-api/.env" // default
+	}
+	if err := godotenv.Load(envPath); err != nil {
+		log.Fatalf("Error loading .env file from %s: %v", envPath, err)
+	}
 
-	// For Development
-	// gin.SetMode(gin.DebugMode)
-	// router := gin.Default()
+	// ===============================
+	// Database init
+	// ===============================
+	database.InitDB()
 
-	// ✅ Trusted proxies (important for production)
-	router.SetTrustedProxies(nil)
+	var router *gin.Engine
+
+	if os.Getenv("MODE") == "PRODUCTION" {
+		gin.SetMode(gin.ReleaseMode)
+		router = gin.New()
+		router.Use(gin.Logger())
+		router.Use(gin.Recovery())
+	} else {
+		gin.SetMode(gin.DebugMode)
+		router = gin.Default()
+	}
+
+	// Set trusted proxies (production-д ч зөв)
+	if err := router.SetTrustedProxies(nil); err != nil {
+		log.Fatalf("Failed to set trusted proxies: %v", err)
+	}
 
 	// Configure CORS
 	config := cors.Config{
@@ -35,12 +56,6 @@ func main() {
 		AllowCredentials: true,
 	}
 	router.Use(cors.New(config))
-
-	err := godotenv.Load("/home/ubuntu/project-go/gocars-api/.env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	database.InitDB()
 
 	// Auto-migrate models here
 	if err := database.DB.AutoMigrate(
