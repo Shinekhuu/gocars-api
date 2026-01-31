@@ -23,13 +23,12 @@ deploy:
   tags: ["shell"]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-  before_script:
+  script:
     - echo "Setup SSH"
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
     - ssh-keyscan $DEPLOY_HOST >> ~/.ssh/known_hosts
-  script:
     - echo "Deploy to server"
     - scp $APP_NAME $DEPLOY_USER@$DEPLOY_HOST:$APP_DIR/$APP_NAME.new
     - |
