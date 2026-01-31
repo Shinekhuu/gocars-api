@@ -20,7 +20,7 @@ func main() {
 	// ===============================
 	envPath := os.Getenv("ENV_PATH")
 	if envPath == "" {
-		envPath = "/home/ubuntu/project-go/gocars-api/.env" // default
+		envPath = "/home/api/.env" // default
 	}
 	if err := godotenv.Load(envPath); err != nil {
 		log.Fatalf("Error loading .env file from %s: %v", envPath, err)
