@@ -31,10 +31,10 @@ type ArticleItem struct {
 	IsFetched            bool `gorm:"type:tinyint(1);default:0"`
 
 	// MUST ADD THIS
-	AllSpecifications []ArticleAllSpecification `gorm:"foreignKey:ArticleID;references:ArticleID;constraint:OnDelete:CASCADE"`
-	AllOems           []ArticleOem              `gorm:"foreignKey:ArticleID;references:ArticleID;constraint:OnDelete:CASCADE;"`
-	AllCategories     []ArticleCategory         `gorm:"foreignKey:ArticleID;references:ArticleID;constraint:OnDelete:CASCADE;"`
-	AllVehicles       []ArticleVehicles         `gorm:"foreignKey:ArticleID;references:ArticleID;constraint:OnDelete:CASCADE;"`
+	AllSpecifications []ArticleAllSpecification `gorm:"foreignKey:ArticleItemID;references:ID;constraint:OnDelete:CASCADE"`
+	AllOems           []ArticleOem              `gorm:"foreignKey:ArticleItemID;references:ID;constraint:OnDelete:CASCADE;"`
+	AllCategories     []ArticleCategory         `gorm:"foreignKey:ArticleItemID;references:ID;constraint:OnDelete:CASCADE;"`
+	AllVehicles       []ArticleVehicles         `gorm:"foreignKey:ArticleItemID;references:ID;constraint:OnDelete:CASCADE;"`
 
 	// For JSON unmarshalling from API (not stored directly)
 	OemResponses           []ArticleOemResponse     `json:"oemNo" gorm:"-"`
@@ -46,6 +46,7 @@ type ArticleAllSpecification struct {
 	CriteriaName  string `json:"criteriaName" gorm:"type:varchar(255)"`
 	CriteriaValue string `json:"criteriaValue" gorm:"type:varchar(255)"`
 	ArticleID     uint   `json:"articleId" gorm:"column:article_id"`
+	ArticleItemID uint   `json:"articleItemId" gorm:"column:article_item_id;index;"`
 }
 
 // ArticleOemResponse is only for API JSON unmarshalling
@@ -67,8 +68,9 @@ type CompatibleCarsResponse struct {
 
 type ArticleVehicles struct {
 	gorm.Model
-	ArticleID uint `json:"articleId" gorm:"column:article_id;index;"`
-	VehicleID uint `json:"vehicleId" gorm:"column:vehicle_id;index;"`
+	ArticleID     uint `json:"articleId" gorm:"column:article_id;index;"`
+	VehicleID     uint `json:"vehicleId" gorm:"column:vehicle_id;index;"`
+	ArticleItemID uint `json:"articleItemId" gorm:"column:article_item_id;index;"`
 }
 
 type VehicleArticlesResponse struct {
@@ -89,8 +91,9 @@ type Oem struct {
 
 type ArticleOem struct {
 	gorm.Model
-	ArticleID uint `gorm:"index"`
-	OemID     uint `gorm:"index"`
+	ArticleID     uint `gorm:"index"`
+	OemID         uint `gorm:"index"`
+	ArticleItemID uint `json:"articleItemId" gorm:"column:article_item_id;index"`
 
 	// Add this so GORM can preload the OEM
 	Oem Oem `gorm:"foreignKey:OemID;references:ID;constraint:OnDelete:CASCADE"`
@@ -98,8 +101,9 @@ type ArticleOem struct {
 
 type ArticleCategory struct {
 	gorm.Model
-	ArticleID  uint `json:"articleId" gorm:"column:article_id;index"`
-	CategoryID uint `json:"categoryId" gorm:"column:category_id;index"`
+	ArticleID     uint `json:"articleId" gorm:"column:article_id;index"`
+	CategoryID    uint `json:"categoryId" gorm:"column:category_id;index"`
+	ArticleItemID uint `json:"articleItemId" gorm:"column:article_item_id;index"`
 
 	// Add this so GORM can preload the Category
 	Category Category `gorm:"foreignKey:CategoryID;references:CategoryID;constraint:OnDelete:CASCADE"`
@@ -116,9 +120,9 @@ func GetArticleItemsByVehicleIdAndCategoryId(vehicleID uint, categoryID uint, pa
 	// 1️⃣ Count total items for pagination
 	if err := database.DB.
 		Table("article_categories AS ac").
-		Joins("INNER JOIN article_vehicles AS av ON av.article_id = ac.article_id").
+		Joins("INNER JOIN article_vehicles AS av ON av.article_item_id = ac.article_item_id").
 		Where("ac.category_id = ? AND av.vehicle_id = ?", categoryID, vehicleID).
-		Select("COUNT(DISTINCT av.article_id)").
+		Select("COUNT(DISTINCT av.article_item_id)").
 		Scan(&total).Error; err != nil {
 		return nil, 0, err
 	}
@@ -130,13 +134,13 @@ func GetArticleItemsByVehicleIdAndCategoryId(vehicleID uint, categoryID uint, pa
 	var articleIDs []uint
 	if err := database.DB.
 		Table("article_categories AS ac").
-		Select("DISTINCT ac.article_id").
-		Joins("INNER JOIN article_vehicles AS av ON av.article_id = ac.article_id").
+		Select("DISTINCT ac.article_item_id").
+		Joins("INNER JOIN article_vehicles AS av ON av.article_item_id = ac.article_item_id").
 		Where("ac.category_id = ? AND av.vehicle_id = ?", categoryID, vehicleID).
-		Order("ac.article_id DESC").
+		Order("ac.article_item_id DESC").
 		Limit(limit).
 		Offset(offset).
-		Pluck("ac.article_id", &articleIDs).Error; err != nil {
+		Pluck("ac.article_item_id", &articleIDs).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -145,10 +149,10 @@ func GetArticleItemsByVehicleIdAndCategoryId(vehicleID uint, categoryID uint, pa
 		if err := database.DB.
 			Table("article_items AS ai").
 			Select("ai.*, GROUP_CONCAT(DISTINCT o.display_no SEPARATOR ', ') AS article_search_no").
-			Joins("LEFT JOIN article_oems AS ao ON ai.article_id = ao.article_id").
+			Joins("LEFT JOIN article_oems AS ao ON ai.id = ao.article_item_id").
 			Joins("LEFT JOIN oems AS o ON ao.oem_id = o.id").
-			Where("ai.article_id IN ?", articleIDs).
-			Group("ai.article_id").
+			Where("ai.id IN ?", articleIDs).
+			Group("ai.id").
 			Find(&dbArticleItems).Error; err != nil {
 			return nil, 0, err
 		}
@@ -165,7 +169,7 @@ func GetArticleItemsByOem(oem string, page int, limit int) (*[]ArticleItem, int6
 	if err := database.DB.
 		Table("oems").
 		Joins("LEFT JOIN article_oems ON oems.id = article_oems.oem_id").
-		Joins("LEFT JOIN article_items ON article_oems.article_id = article_items.article_id").
+		Joins("LEFT JOIN article_items ON article_oems.article_item_id = article_items.id").
 		Where(
 			"UPPER(REGEXP_REPLACE(oems.display_no, '[^A-Za-z0-9]', '')) = "+
 				"UPPER(REGEXP_REPLACE(?, '[^A-Za-z0-9]', ''))",
@@ -183,7 +187,7 @@ func GetArticleItemsByOem(oem string, page int, limit int) (*[]ArticleItem, int6
 		Table("oems").
 		Select("article_items.*").
 		Joins("LEFT JOIN article_oems ON oems.id = article_oems.oem_id").
-		Joins("LEFT JOIN article_items ON article_oems.article_id = article_items.article_id").
+		Joins("LEFT JOIN article_items ON article_oems.article_item_id = article_items.id").
 		Where(
 			"UPPER(REGEXP_REPLACE(oems.display_no, '[^A-Za-z0-9]', '')) = "+
 				"UPPER(REGEXP_REPLACE(?, '[^A-Za-z0-9]', ''))",
@@ -240,20 +244,20 @@ func GetArticleItemsFromRapidAPI(vehicleID uint, categoryID uint) (*VehicleArtic
 				FirstOrCreate(article)
 
 			av := ArticleVehicles{
-				ArticleID: article.ArticleID,
-				VehicleID: vehicleArticlesResponse.VehicleID,
+				ArticleItemID: article.ID,
+				VehicleID:     vehicleArticlesResponse.VehicleID,
 			}
 			_ = database.DB.
-				Where("vehicle_id = ? AND article_id = ?", av.VehicleID, av.ArticleID).
+				Where("vehicle_id = ? AND article_item_id = ?", av.VehicleID, av.ArticleItemID).
 				Assign(av).
 				FirstOrCreate(&av)
 
 			ac := ArticleCategory{
-				ArticleID:  article.ArticleID,
-				CategoryID: vehicleArticlesResponse.CategoryID,
+				ArticleItemID: article.ID,
+				CategoryID:    vehicleArticlesResponse.CategoryID,
 			}
 			_ = database.DB.
-				Where("category_id = ? AND article_id = ?", ac.CategoryID, av.ArticleID).
+				Where("category_id = ? AND article_item_id = ?", ac.CategoryID, av.ArticleItemID).
 				Assign(ac).
 				FirstOrCreate(&ac)
 		}
@@ -325,12 +329,12 @@ func GetArticleItemsByOemFromRapidAPI(oem string) ([]ArticleItem, error) {
 
 				// Link Article <-> OEM
 				link := ArticleOem{
-					ArticleID: article.ArticleID,
-					OemID:     newOem.ID,
+					ArticleItemID: article.ID,
+					OemID:         newOem.ID,
 				}
 
 				if err := tx.
-					Where("article_id = ? AND oem_id = ?", link.ArticleID, link.OemID).
+					Where("article_item_id = ? AND oem_id = ?", link.ArticleItemID, link.OemID).
 					Assign(&link).
 					FirstOrCreate(&link).Error; err != nil {
 					return err
@@ -395,13 +399,13 @@ func GetArticleCompleteDetailFromRapidAPI(articleID int) (*ArticleItem, error) {
 			// 2) Upsert Specifications
 			for _, s := range a.AllSpecifications {
 				spec := ArticleAllSpecification{
-					ArticleID:     a.ArticleID,
+					ArticleItemID: a.ID,
 					CriteriaName:  s.CriteriaName,
 					CriteriaValue: s.CriteriaValue,
 				}
 
 				if err := tx.
-					Where("article_id = ? AND criteria_name = ? AND criteria_value = ?", spec.ArticleID, spec.CriteriaName, spec.CriteriaValue).
+					Where("article_item_id = ? AND criteria_name = ? AND criteria_value = ?", spec.ArticleItemID, spec.CriteriaName, spec.CriteriaValue).
 					Assign(&spec).
 					FirstOrCreate(&spec).Error; err != nil {
 					return err
@@ -426,12 +430,12 @@ func GetArticleCompleteDetailFromRapidAPI(articleID int) (*ArticleItem, error) {
 
 				// Link Article <-> OEM
 				link := ArticleOem{
-					ArticleID: a.ArticleID,
-					OemID:     newOem.ID,
+					ArticleItemID: a.ID,
+					OemID:         newOem.ID,
 				}
 
 				if err := tx.
-					Where("article_id = ? AND oem_id = ?", link.ArticleID, link.OemID).
+					Where("article_item_id = ? AND oem_id = ?", link.ArticleItemID, link.OemID).
 					Assign(&link).
 					FirstOrCreate(&link).Error; err != nil {
 					return err
@@ -475,12 +479,12 @@ func GetArticleCompleteDetailFromRapidAPI(articleID int) (*ArticleItem, error) {
 
 				// Link Article <-> Vehicle (Engine)
 				link := ArticleVehicles{
-					ArticleID: a.ArticleID,
-					VehicleID: engine.VehicleID,
+					ArticleItemID: a.ID,
+					VehicleID:     engine.VehicleID,
 				}
 
 				if err := tx.
-					Where("article_id = ? AND vehicle_id = ?", link.ArticleID, link.VehicleID).
+					Where("article_item_id = ? AND vehicle_id = ?", link.ArticleItemID, link.VehicleID).
 					Assign(&link).
 					FirstOrCreate(&link).Error; err != nil {
 					return err
