@@ -117,6 +117,7 @@ func main() {
 
 	// router.GET("/article-seeder", controllers.FillArticleItemData)
 	router.GET("/article", controllers.Article)
+	router.GET("/openai", controllers.GetResponse)
 
 	// router.GET("/category-seeder", controllers.FillCategories)
 
