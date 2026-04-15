@@ -27,15 +27,19 @@ deploy:
     - if: '$CI_COMMIT_BRANCH == "main"'
   before_script:
     - echo "Setting up SSH..."
-    - mkdir -p ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
+
+    - New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.ssh
+
+    - $SSH_PRIVATE_KEY | Out-File -Encoding ascii "$env:USERPROFILE\.ssh\id_rsa"
+    - icacls "$env:USERPROFILE\.ssh\id_rsa" /inheritance:r /grant:r "$($env:USERNAME):(R)"
+
     - |
-      if [ -z "$DEPLOY_HOST" ]; then
-        echo "Error: DEPLOY_HOST is not set"
+      if (-not $env:DEPLOY_HOST) {
+        Write-Host "Error: DEPLOY_HOST is not set"
         exit 1
-      fi
-    - ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
+      }
+
+    - ssh-keyscan -H $env:DEPLOY_HOST >> "$env:USERPROFILE\.ssh\known_hosts"
   script:
     - echo "Deploying $APP_NAME to $DEPLOY_HOST..."
     - scp $APP_NAME $DEPLOY_USER@$DEPLOY_HOST:$APP_DIR/$APP_NAME.new
