@@ -31,13 +31,6 @@ deploy:
     - New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.ssh
 
     - $SSH_PRIVATE_KEY | Out-File -Encoding ascii "$env:USERPROFILE\.ssh\id_rsa"
-    - icacls "$env:USERPROFILE\.ssh\id_rsa" /inheritance:r /grant:r "$($env:USERNAME):(R)"
-
-    - |
-      if (-not $env:DEPLOY_HOST) {
-        Write-Host "Error: DEPLOY_HOST is not set"
-        exit 1
-      }
 
     - ssh-keyscan -H $env:DEPLOY_HOST >> "$env:USERPROFILE\.ssh\known_hosts"
   script:
