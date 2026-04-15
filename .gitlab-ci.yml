@@ -41,17 +41,12 @@ deploy:
 
     - ssh-keyscan -H $env:DEPLOY_HOST >> "$env:USERPROFILE\.ssh\known_hosts"
   script:
-    - echo "Deploying $APP_NAME to $DEPLOY_HOST..."
-    - scp $APP_NAME $DEPLOY_USER@$DEPLOY_HOST:$APP_DIR/$APP_NAME.new
+    - scp $APP_NAME "${env:DEPLOY_USER}@${env:DEPLOY_HOST}:${env:APP_DIR}/$APP_NAME.new"
     - |
-      ssh $DEPLOY_USER@$DEPLOY_HOST "
+      ssh "${env:DEPLOY_USER}@${env:DEPLOY_HOST}" "
         set -e
-
-        # Atomic install: set owner to deploy user and permissions
-        sudo install -o root -g root -m 755 $APP_DIR/$APP_NAME.new $APP_DIR/$APP_NAME
-
-        # Restart systemd service
+        sudo install -o root -g root -m 755 ${env:APP_DIR}/$APP_NAME.new ${env:APP_DIR}/$APP_NAME
         sudo systemctl daemon-reload
-        sudo systemctl restart $SERVICE_NAME
-        sudo systemctl status $SERVICE_NAME --no-pager
+        sudo systemctl restart ${env:SERVICE_NAME}
+        sudo systemctl status ${env:SERVICE_NAME} --no-pager
       "
