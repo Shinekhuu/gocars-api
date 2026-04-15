@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -28,6 +29,18 @@ func InitDB() {
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
+
+	// 🔥 IMPORTANT: configure connection pool
+	sqlDB, err := DB.DB()
+	if err != nil {
+		log.Fatal("Failed to get DB instance:", err)
+	}
+
+	// ✅ limits
+	sqlDB.SetMaxOpenConns(10)                 // max connections
+	sqlDB.SetMaxIdleConns(5)                  // idle connections
+	sqlDB.SetConnMaxLifetime(time.Hour)       // max lifetime
+	sqlDB.SetConnMaxIdleTime(5 * time.Minute) // idle timeout
 
 	log.Println("Database initialized successfully")
 }

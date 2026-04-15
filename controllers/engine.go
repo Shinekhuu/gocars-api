@@ -25,6 +25,7 @@ func GetEngines(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"total":   engineResponse.CountModelTypes,
 			"engines": engineResponse.Engines,
+			"source":  "database",
 		})
 		return
 	}
@@ -39,5 +40,6 @@ func GetEngines(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"total":   engineResponse.CountModelTypes,
 		"engines": engineResponse.Engines,
+		"source":  "api",
 	})
 }
