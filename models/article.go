@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"gocars-api/database"
+	"gocars-api/utils"
 	"io"
+	"log"
 	"net/http"
 	"os"
 
@@ -15,7 +17,7 @@ import (
 // ArticleItem represents a single article item
 type ArticleItem struct {
 	gorm.Model
-	ArticleID            uint   `json:"articleId" gorm:"column:article_id;uniqueIndex"`
+	ArticleID            *uint  `json:"articleId" gorm:"column:article_id;index"`
 	ArticleSearchNo      string `json:"articleSearchNo" gorm:"column:article_search_no;type:text"`
 	ArticleNo            string `json:"articleNo" gorm:"column:article_no;type:text"`
 	ArticleProductName   string `json:"articleProductName" gorm:"column:article_product_name;type:text"`
@@ -45,8 +47,7 @@ type ArticleAllSpecification struct {
 	gorm.Model
 	CriteriaName  string `json:"criteriaName" gorm:"type:varchar(255)"`
 	CriteriaValue string `json:"criteriaValue" gorm:"type:varchar(255)"`
-	ArticleID     uint   `json:"articleId" gorm:"column:article_id"`
-	ArticleItemID uint   `json:"articleItemId" gorm:"column:article_item_id;index;"`
+	ArticleItemID uint   `json:"articleItemId" gorm:"column:article_item_id;index"`
 }
 
 // ArticleOemResponse is only for API JSON unmarshalling
@@ -68,14 +69,13 @@ type CompatibleCarsResponse struct {
 
 type ArticleVehicles struct {
 	gorm.Model
-	ArticleID     uint `json:"articleId" gorm:"column:article_id;index;"`
-	VehicleID     uint `json:"vehicleId" gorm:"column:vehicle_id;index;"`
-	ArticleItemID uint `json:"articleItemId" gorm:"column:article_item_id;index;"`
+	VehicleID     uint `json:"vehicleId" gorm:"column:vehicle_id;uniqueIndex:idx_article_vehicle;"`
+	ArticleItemID uint `json:"articleItemId" gorm:"column:article_item_id;uniqueIndex:idx_article_vehicle;"`
 }
 
 type VehicleArticlesResponse struct {
-	VehicleID  uint          `json:"vehicleId"`
-	CategoryID uint          `json:"categoryId"` // optional
+	VehicleID  string        `json:"vehicleId"`
+	CategoryID string        `json:"categoryId"` // optional
 	Articles   []ArticleItem `json:"articles"`   // must match JSON
 }
 
@@ -85,15 +85,17 @@ type OemArticleResponse struct {
 
 type Oem struct {
 	gorm.Model
-	Brand     string `json:"brand" gorm:"type:varchar(255)"`
-	DisplayNo string `json:"displayNo" gorm:"type:varchar(255);index"`
+	Brand     string `json:"brand" gorm:"type:varchar(255);uniqueIndex:idx_oem"`
+	DisplayNo string `json:"displayNo" gorm:"type:varchar(255);uniqueIndex:idx_oem"`
+
+	// 🔥 NEW: cleaned version (for fast search)
+	DisplayNoClean string `json:"-" gorm:"type:varchar(255);index"`
 }
 
 type ArticleOem struct {
 	gorm.Model
-	ArticleID     uint `gorm:"index"`
-	OemID         uint `gorm:"index"`
-	ArticleItemID uint `json:"articleItemId" gorm:"column:article_item_id;index"`
+	ArticleItemID uint `json:"articleItemId" gorm:"column:article_item_id;uniqueIndex:idx_article_oem"`
+	OemID         uint `json:"oemId" gorm:"column:oem_id;uniqueIndex:idx_article_oem"`
 
 	// Add this so GORM can preload the OEM
 	Oem Oem `gorm:"foreignKey:OemID;references:ID;constraint:OnDelete:CASCADE"`
@@ -101,42 +103,73 @@ type ArticleOem struct {
 
 type ArticleCategory struct {
 	gorm.Model
-	ArticleID     uint `json:"articleId" gorm:"column:article_id;index"`
-	CategoryID    uint `json:"categoryId" gorm:"column:category_id;index"`
-	ArticleItemID uint `json:"articleItemId" gorm:"column:article_item_id;index"`
+	CategoryID    uint `json:"categoryId" gorm:"column:category_id;uniqueIndex:idx_article_category"`
+	ArticleItemID uint `json:"articleItemId" gorm:"column:article_item_id;uniqueIndex:idx_article_category"`
 
 	// Add this so GORM can preload the Category
 	Category Category `gorm:"foreignKey:CategoryID;references:CategoryID;constraint:OnDelete:CASCADE"`
 }
 
 type RapidAPIResponse struct {
-	Article ArticleItem `json:"article"`
+	Article ArticleAPI `json:"article"`
+}
+
+type ArticleAPI struct {
+	ArticleID            uint   `json:"articleId"`
+	ArticleNo            string `json:"articleNo"`
+	ArticleProductName   string `json:"articleProductName"`
+	SupplierName         string `json:"supplierName"`
+	SupplierID           uint   `json:"supplierId"`
+	ProductID            int    `json:"productId"`
+	ArticleMediaType     string `json:"articleMediaType"`
+	ArticleMediaFileName string `json:"articleMediaFileName"`
+	S3Image              string `json:"s3image"`
+
+	AllSpecifications []ArticleAllSpecification `json:"allSpecifications"`
+
+	OemNo []ArticleOemResponse `json:"oemNo"`
+
+	CompatibleCars []CompatibleCarsResponse `json:"compatibleCars"`
 }
 
 func GetArticleItemsByVehicleIdAndCategoryId(vehicleID uint, categoryID uint, page int, limit int) (*[]ArticleItem, int64, error) {
 	var dbArticleItems []ArticleItem
 	var total int64
 
-	// 1️⃣ Count total items for pagination
-	if err := database.DB.
+	// Base query
+	baseQuery := database.DB.
 		Table("article_categories AS ac").
 		Joins("INNER JOIN article_vehicles AS av ON av.article_item_id = ac.article_item_id").
-		Where("ac.category_id = ? AND av.vehicle_id = ?", categoryID, vehicleID).
-		Select("COUNT(DISTINCT av.article_item_id)").
+		Where("ac.category_id = ?", categoryID)
+
+	// 👉 Apply vehicle filter ONLY if vehicleID != 0
+	if vehicleID != 0 {
+		baseQuery = baseQuery.Where("av.vehicle_id = ?", vehicleID)
+	}
+
+	// 1️⃣ Count total
+	if err := baseQuery.
+		Select("COUNT(DISTINCT ac.article_item_id)").
 		Scan(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// 2️⃣ Pagination logic
+	// 2️⃣ Pagination
 	offset := (page - 1) * limit
 
-	// 3️⃣ First, fetch article IDs only
+	// 3️⃣ Get article IDs
 	var articleIDs []uint
-	if err := database.DB.
+	idQuery := database.DB.
 		Table("article_categories AS ac").
 		Select("DISTINCT ac.article_item_id").
 		Joins("INNER JOIN article_vehicles AS av ON av.article_item_id = ac.article_item_id").
-		Where("ac.category_id = ? AND av.vehicle_id = ?", categoryID, vehicleID).
+		Where("ac.category_id = ?", categoryID)
+
+	if vehicleID != 0 {
+		idQuery = idQuery.Where("av.vehicle_id = ?", vehicleID)
+	}
+
+	if err := idQuery.
 		Order("ac.article_item_id DESC").
 		Limit(limit).
 		Offset(offset).
@@ -144,7 +177,7 @@ func GetArticleItemsByVehicleIdAndCategoryId(vehicleID uint, categoryID uint, pa
 		return nil, 0, err
 	}
 
-	// 4️⃣ Fetch article details + OEMs only for these IDs
+	// 4️⃣ Fetch details
 	if len(articleIDs) > 0 {
 		if err := database.DB.
 			Table("article_items AS ai").
@@ -245,7 +278,7 @@ func GetArticleItemsFromRapidAPI(vehicleID uint, categoryID uint) (*VehicleArtic
 
 			av := ArticleVehicles{
 				ArticleItemID: article.ID,
-				VehicleID:     vehicleArticlesResponse.VehicleID,
+				VehicleID:     utils.AtoiUint(vehicleArticlesResponse.VehicleID),
 			}
 			_ = database.DB.
 				Where("vehicle_id = ? AND article_item_id = ?", av.VehicleID, av.ArticleItemID).
@@ -254,7 +287,7 @@ func GetArticleItemsFromRapidAPI(vehicleID uint, categoryID uint) (*VehicleArtic
 
 			ac := ArticleCategory{
 				ArticleItemID: article.ID,
-				CategoryID:    vehicleArticlesResponse.CategoryID,
+				CategoryID:    utils.AtoiUint(vehicleArticlesResponse.CategoryID),
 			}
 			_ = database.DB.
 				Where("category_id = ? AND article_item_id = ?", ac.CategoryID, av.ArticleItemID).
@@ -351,153 +384,161 @@ func GetArticleItemsByOemFromRapidAPI(oem string) ([]ArticleItem, error) {
 	return articles, nil
 }
 
-// Fetch from RapidAPI and save asynchronously
-func GetArticleCompleteDetailFromRapidAPI(articleID int) (*ArticleItem, error) {
-	url := fmt.Sprintf(
-		"https://tecdoc-catalog.p.rapidapi.com/articles/article-complete-details/type-id/1/article-id/%d/lang-id/4/country-filter-id/125",
-		articleID,
-	)
+// categories is a JSON string like "[1,2,3]"
+func SaveArticleItemToDB(article *ArticleItem, vehicleIDs []uint, categories string) (*ArticleItem, error) {
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error creating request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-rapidapi-key", os.Getenv("X_RAPIDAPI_KEY"))
-	req.Header.Set("x-rapidapi-host", os.Getenv("X_RAPIDAPI_HOST"))
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("error calling API: %w", err)
-	}
-	defer resp.Body.Close()
+		// =========================
+		// 1. CHECK EXISTING ARTICLE
+		// =========================
+		err := tx.
+			Model(&ArticleItem{}).
+			Select("id").
+			Where("article_no = ?", article.ArticleNo).
+			Limit(1).
+			Scan(&article.ID).Error
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error reading response: %w", err)
-	}
+		if err != nil {
+			return err
+		}
 
-	// Unmarshal into wrapper struct
-	var apiResp RapidAPIResponse
-	if err := json.Unmarshal(body, &apiResp); err != nil {
-		return nil, fmt.Errorf("error parsing JSON: %w", err)
-	}
+		exists := article.ID != 0
 
-	articleDetail := apiResp.Article
+		// =========================
+		// 2. OEM (FirstOrCreate)
+		// =========================
+		oem := Oem{
+			Brand:     article.SupplierName,
+			DisplayNo: article.ArticleNo,
+		}
 
-	// Save asynchronously
-	go func(a ArticleItem) {
-		err := database.DB.Transaction(func(tx *gorm.DB) error {
-			// 1) Upsert ArticleItem
-			if err := tx.
-				Where("article_id = ?", a.ArticleID).
-				Assign(map[string]interface{}{"is_fetched": true}).
-				FirstOrCreate(&a).Error; err != nil {
+		if err := tx.
+			Where(Oem{
+				Brand:     oem.Brand,
+				DisplayNo: oem.DisplayNo,
+			}).
+			FirstOrCreate(&oem).Error; err != nil {
+			return err
+		}
+
+		// =========================
+		// 3. ARTICLE (CREATE IF NOT EXISTS)
+		// =========================
+		if !exists {
+			if err := tx.Create(article).Error; err != nil {
+				return err
+			}
+		}
+
+		// =========================
+		// 4. LINK ARTICLE <-> OEM
+		// =========================
+		if err := tx.
+			Clauses(clause.OnConflict{
+				Columns: []clause.Column{
+					{Name: "article_item_id"},
+					{Name: "oem_id"},
+				},
+				DoNothing: true,
+			}).
+			Create(&ArticleOem{
+				ArticleItemID: article.ID,
+				OemID:         oem.ID,
+			}).Error; err != nil {
+			return err
+		}
+
+		// =========================
+		// 5. VEHICLES (DEDUP + BULK)
+		// =========================
+		if len(vehicleIDs) > 0 {
+			vMap := make(map[uint]struct{}, len(vehicleIDs))
+			vehicles := make([]ArticleVehicles, 0, len(vehicleIDs))
+
+			for _, vid := range vehicleIDs {
+				if vid == 0 {
+					continue
+				}
+				if _, ok := vMap[vid]; ok {
+					continue
+				}
+				vMap[vid] = struct{}{}
+
+				vehicles = append(vehicles, ArticleVehicles{
+					ArticleItemID: article.ID,
+					VehicleID:     vid,
+				})
+			}
+
+			if len(vehicles) > 0 {
+				if err := tx.
+					Clauses(clause.OnConflict{
+						Columns: []clause.Column{
+							{Name: "article_item_id"},
+							{Name: "vehicle_id"},
+						},
+						DoNothing: true,
+					}).
+					Create(&vehicles).Error; err != nil {
+					return err
+				}
+			}
+		}
+
+		// =========================
+		// 6. CATEGORIES (DEDUP + BULK)
+		// =========================
+		if categories != "" && categories != "null" {
+			var categoryIDs []uint
+
+			if err := json.Unmarshal([]byte(categories), &categoryIDs); err != nil {
+				log.Println("⚠️ invalid categories:", categories)
 				return err
 			}
 
-			// 2) Upsert Specifications
-			for _, s := range a.AllSpecifications {
-				spec := ArticleAllSpecification{
-					ArticleItemID: a.ID,
-					CriteriaName:  s.CriteriaName,
-					CriteriaValue: s.CriteriaValue,
+			if len(categoryIDs) > 0 {
+				cMap := make(map[uint]struct{}, len(categoryIDs))
+				cats := make([]ArticleCategory, 0, len(categoryIDs))
+
+				for _, cid := range categoryIDs {
+					if cid == 0 {
+						continue
+					}
+					if _, ok := cMap[cid]; ok {
+						continue
+					}
+					cMap[cid] = struct{}{}
+
+					cats = append(cats, ArticleCategory{
+						ArticleItemID: article.ID,
+						CategoryID:    cid,
+					})
 				}
 
-				if err := tx.
-					Where("article_item_id = ? AND criteria_name = ? AND criteria_value = ?", spec.ArticleItemID, spec.CriteriaName, spec.CriteriaValue).
-					Assign(&spec).
-					FirstOrCreate(&spec).Error; err != nil {
-					return err
-				}
-			}
-
-			// 3) Upsert OEMs + linking table
-			for _, o := range a.OemResponses {
-
-				newOem := Oem{
-					Brand:     o.Brand,
-					DisplayNo: o.DisplayNo,
-				}
-
-				// Upsert Oem
-				if err := tx.
-					Where("brand = ? AND display_no = ?", newOem.Brand, newOem.DisplayNo).
-					Assign(&newOem).
-					FirstOrCreate(&newOem).Error; err != nil {
-					return err
-				}
-
-				// Link Article <-> OEM
-				link := ArticleOem{
-					ArticleItemID: a.ID,
-					OemID:         newOem.ID,
-				}
-
-				if err := tx.
-					Where("article_item_id = ? AND oem_id = ?", link.ArticleItemID, link.OemID).
-					Assign(&link).
-					FirstOrCreate(&link).Error; err != nil {
-					return err
+				if len(cats) > 0 {
+					if err := tx.
+						Clauses(clause.OnConflict{
+							Columns: []clause.Column{
+								{Name: "article_item_id"},
+								{Name: "category_id"},
+							},
+							DoNothing: true,
+						}).
+						Create(&cats).Error; err != nil {
+						return err
+					}
 				}
 			}
-
-			// 4) Engines + linking table
-			for _, c := range a.CompatibleCarsResponse {
-
-				// Resolve manufacturer ID (only ID)
-				tx.Model(&Manufacturer{}).
-					Select("manufacturer_id").
-					Where("manufacturer_name = ?", c.ManufacturerName).
-					Find(&c.ManufacturerID)
-
-				// Upsert Engine
-				engine := Engine{
-					VehicleID:                 c.VehicleID,
-					ManufacturerID:            c.ManufacturerID,
-					ManufacturerName:          c.ManufacturerName,
-					ModelID:                   c.ModelID,
-					ModelName:                 c.ModelName,
-					TypeEngineName:            c.TypeEngineName,
-					ConstructionIntervalStart: c.ConstructionIntervalStart,
-					ConstructionIntervalEnd:   c.ConstructionIntervalEnd,
-				}
-
-				if err := tx.Clauses(clause.OnConflict{
-					Columns: []clause.Column{{Name: "vehicle_id"}, {Name: "model_id"}},
-					DoUpdates: clause.AssignmentColumns([]string{
-						"manufacturer_id",
-						"manufacturer_name",
-						"model_name",
-						"type_engine_name",
-						"construction_interval_start",
-						"construction_interval_end",
-					}),
-				}).Create(&engine).Error; err != nil {
-					return err
-				}
-
-				// Link Article <-> Vehicle (Engine)
-				link := ArticleVehicles{
-					ArticleItemID: a.ID,
-					VehicleID:     engine.VehicleID,
-				}
-
-				if err := tx.
-					Where("article_item_id = ? AND vehicle_id = ?", link.ArticleItemID, link.VehicleID).
-					Assign(&link).
-					FirstOrCreate(&link).Error; err != nil {
-					return err
-				}
-			}
-
-			return nil
-		})
-
-		if err != nil {
-			fmt.Println("Async article save failed:", err)
 		}
-	}(articleDetail)
 
-	return &articleDetail, nil
+		return nil
+	})
+
+	if err != nil {
+		log.Println(article.ArticleNo, "❌ Save failed:", err)
+		return nil, err
+	}
+
+	return article, nil
 }

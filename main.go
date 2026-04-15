@@ -1,13 +1,17 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"os"
 
+	"gocars-api/commands"
 	"gocars-api/controllers"
 	"gocars-api/database"
 	"gocars-api/middleware"
 	"gocars-api/models"
+	"gocars-api/workers"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -26,6 +30,18 @@ func main() {
 	// Database init
 	// ===============================
 	database.InitDB()
+
+	// Define CLI flag
+	runSync := flag.Bool("commands-sync", false, "Run sync command")
+
+	flag.Parse()
+
+	// If flag provided → run Sync only
+	if *runSync {
+		fmt.Println("🚀 Running Sync...")
+		commands.Sync()
+		return
+	}
 
 	var router *gin.Engine
 
@@ -53,48 +69,52 @@ func main() {
 	}
 	router.Use(cors.New(config))
 
-	// Auto-migrate models here
-	if err := database.DB.AutoMigrate(
-		&models.Category{},
-		&models.Oem{},
-		&models.Xyr{},
-		&models.User{},
-		&models.Otp{},
-		&models.Manufacturer{},
-		&models.Model{},
-		&models.EngineFamily{},
-		&models.ModelFamily{},
-		&models.ArticleAllSpecification{},
-		&models.ArticleVehicles{},
-	); err != nil {
-		log.Fatal("Failed to migrate database:", err)
+	if os.Getenv("MODE") != "DEVELOPMENT" {
+		// Auto-migrate models here
+		if err := database.DB.AutoMigrate(
+			&models.Category{},
+			&models.Oem{},
+			&models.Xyr{},
+			&models.User{},
+			&models.Otp{},
+			&models.Manufacturer{},
+			&models.Model{},
+			&models.EngineFamily{},
+			&models.ModelFamily{},
+			&models.ArticleAllSpecification{},
+			&models.ArticleVehicles{},
+		); err != nil {
+			log.Fatal("Failed to migrate database:", err)
+		}
+
+		// Auto-migrate models here
+		if err := database.DB.AutoMigrate(
+			&models.Engine{},
+			&models.ArticleOem{},
+			&models.ArticleCategory{},
+		); err != nil {
+			log.Fatal("Failed to migrate database:", err)
+		}
+
+		// Auto-migrate models here
+		if err := database.DB.AutoMigrate(
+			&models.ArticleItem{},
+			&models.XyrVehicle{},
+		); err != nil {
+			log.Fatal("Failed to migrate database:", err)
+		}
+
+		// Auto-migrate models here
+		if err := database.DB.AutoMigrate(
+			&models.Order{},
+			&models.OrderItem{},
+			&models.Invoice{},
+		); err != nil {
+			log.Fatal("Failed to migrate database:", err)
+		}
 	}
 
-	// Auto-migrate models here
-	if err := database.DB.AutoMigrate(
-		&models.Engine{},
-		&models.ArticleOem{},
-		&models.ArticleCategory{},
-	); err != nil {
-		log.Fatal("Failed to migrate database:", err)
-	}
-
-	// Auto-migrate models here
-	if err := database.DB.AutoMigrate(
-		&models.ArticleItem{},
-		&models.XyrVehicle{},
-	); err != nil {
-		log.Fatal("Failed to migrate database:", err)
-	}
-
-	// Auto-migrate models here
-	if err := database.DB.AutoMigrate(
-		&models.Order{},
-		&models.OrderItem{},
-		&models.Invoice{},
-	); err != nil {
-		log.Fatal("Failed to migrate database:", err)
-	}
+	workers.StartWorker()
 
 	router.GET("/", func(c *gin.Context) { c.JSON(200, gin.H{"message": "Welcome"}) })
 	router.POST("/signin", controllers.SignIn)
@@ -108,7 +128,7 @@ func main() {
 	router.GET("/engine", controllers.GetEngines)
 
 	router.GET("/vehicle", controllers.FetchData)
-	router.GET("/search", controllers.SearchOEM)
+	router.GET("/search", controllers.Search)
 	router.GET("/shop", controllers.Shop)
 
 	// router.GET("/decode", controllers.Decode)
@@ -118,6 +138,7 @@ func main() {
 	// router.GET("/article-seeder", controllers.FillArticleItemData)
 	router.GET("/article", controllers.Article)
 	router.GET("/openai", controllers.GetResponse)
+	router.GET("/openai_mapper", controllers.GetMapper)
 
 	// router.GET("/category-seeder", controllers.FillCategories)
 

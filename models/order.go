@@ -59,7 +59,7 @@ func CreateTransaction(userID uint, articleIDs []uint) (Order, Invoice, error) {
 		for _, a := range articles {
 			item := OrderItem{
 				OrderID:   order.ID,
-				ArticleID: a.ArticleID,
+				ArticleID: *a.ArticleID,
 				Quantity:  1,
 				Price:     a.Price,
 			}

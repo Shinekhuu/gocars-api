@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	"gorm.io/gorm"
@@ -153,4 +154,49 @@ func GetEnginesByModelId(modelID uint) (*EngineResponse, error) {
 
 	// 3️⃣ Return result (even if empty)
 	return &engineResponse, nil
+}
+
+var nonAlnumRegex = regexp.MustCompile(`[^\p{L}\p{N}]`)
+
+// =========================
+// DB QUERY
+// =========================
+func GetEnginesByTypeEngineNames(engineNames []string) ([]Engine, error) {
+	var engines []Engine
+
+	var conditions []string
+	var args []interface{}
+
+	for _, name := range engineNames {
+		name = strings.TrimSpace(name)
+		if name == "" {
+			continue
+		}
+
+		// Normalize input
+		clean := nonAlnumRegex.ReplaceAllString(name, "")
+		clean = strings.ToUpper(clean)
+
+		if clean == "" {
+			continue
+		}
+
+		conditions = append(conditions,
+			"UPPER(REGEXP_REPLACE(type_engine_name, '[^A-Za-z0-9]', '')) LIKE ?",
+		)
+
+		args = append(args, "%"+clean+"%")
+	}
+
+	if len(conditions) == 0 {
+		return engines, nil
+	}
+
+	query := database.DB.Where(strings.Join(conditions, " OR "), args...)
+
+	if err := query.Find(&engines).Error; err != nil {
+		return nil, err
+	}
+
+	return engines, nil
 }
