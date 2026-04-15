@@ -2,19 +2,21 @@ package controllers
 
 import (
 	"gocars-api/models"
+	"gocars-api/utils"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
-func SearchOEM(c *gin.Context) {
-	oem := c.DefaultQuery("oem", "")
+func Search(c *gin.Context) {
+	query := c.DefaultQuery("query", "")
+	vehicle_id := c.DefaultQuery("vehicle_id", "")
+	category_id := c.DefaultQuery("category_id", "")
 
 	// Pagination query params
 	pageStr := c.DefaultQuery("page", "1")
 	limitStr := c.DefaultQuery("limit", "40")
-
 	page, err := strconv.Atoi(pageStr)
 	if err != nil || page < 1 {
 		page = 1
@@ -25,26 +27,34 @@ func SearchOEM(c *gin.Context) {
 		limit = 40
 	}
 
-	if oem == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required 'oem' parameter"})
+	if query == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required 'query' parameter"})
 		return
 	}
 
-	// Try reading from DB first
-	articles, total, err := models.GetArticleItemsByOem(oem, page, limit)
+	filter := models.ProductFilter{
+		Search:     &query,
+		VehicleID:  utils.StringToUintPtr(vehicle_id),
+		CategoryID: utils.StringToUintPtr(category_id),
+		Page:       page,
+		Limit:      limit,
+	}
+
+	products, total, err := models.GetProducts(filter)
+
 	if err == nil && total > 0 {
 		c.JSON(http.StatusOK, gin.H{
 			"page":     page,
 			"limit":    limit,
 			"total":    total,
-			"articles": articles,
+			"articles": products,
 		})
 		return
 	}
 
 	// Otherwise, fetch from API
 	var apiArticles []models.ArticleItem
-	apiArticles, err = models.GetArticleItemsByOemFromRapidAPI(oem)
+	apiArticles, err = models.GetArticleItemsByOemFromRapidAPI(query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
