@@ -34,9 +34,10 @@ deploy:
 
     - ssh-keyscan -H $env:DEPLOY_HOST >> "$env:USERPROFILE\.ssh\known_hosts"
   script:
-    - scp $APP_NAME "${env:DEPLOY_USER}@${env:DEPLOY_HOST}:${env:APP_DIR}/$APP_NAME.new"
+    - scp -o StrictHostKeyChecking=no $APP_NAME "${env:DEPLOY_USER}@${env:DEPLOY_HOST}:${env:APP_DIR}/$APP_NAME.new"
+
     - |
-      ssh "${env:DEPLOY_USER}@${env:DEPLOY_HOST}" "
+      ssh -o StrictHostKeyChecking=no "${env:DEPLOY_USER}@${env:DEPLOY_HOST}" "
         set -e
         sudo install -o root -g root -m 755 ${env:APP_DIR}/$APP_NAME.new ${env:APP_DIR}/$APP_NAME
         sudo systemctl daemon-reload
