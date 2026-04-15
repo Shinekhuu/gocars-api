@@ -15,6 +15,9 @@ build:
   script:
     - go version
     - go mod download
+    - $env:CGO_ENABLED="0"
+    - $env:GOOS="linux"
+    - $env:GOARCH="amd64"
     - go build -o $APP_NAME
   artifacts:
     paths:
