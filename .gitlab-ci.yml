@@ -9,25 +9,14 @@ variables:
   APP_DIR: "/home/api"
   SERVICE_NAME: gocars-api   # systemd service name
 
-before_script:
-  - |
-    if command -v go >/dev/null 2>&1; then
-      echo "Go is already installed: $(go version)"
-    else
-      echo "Installing Go..."
-      wget https://go.dev/dl/go1.25.0.linux-amd64.tar.gz
-      tar -C $CI_PROJECT_DIR -xzf go1.25.0.linux-amd64.tar.gz
-      export PATH=$CI_PROJECT_DIR/go/bin:$PATH
-      echo "Go installed: $(go version)"
-    fi
-  - go mod download
-
 build:
   stage: build
   tags: ["shell"]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
   script:
+    - go version
+    - go mod download
     - go build -o $APP_NAME
   artifacts:
     paths:
