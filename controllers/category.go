@@ -22,3 +22,19 @@ func FillCategories(c *gin.Context) {
 
 	c.JSON(200, gin.H{"message": "Seeding started in background"})
 }
+
+func SyncCategoryMn(c *gin.Context) {
+	categoryMap, err := models.LoadCategoryMap("/home/ubuntu/project-go/gocars-api/data/categories_mn.json")
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = models.UpdateCategoryNamesBatch(categoryMap)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Category names updated successfully"})
+}

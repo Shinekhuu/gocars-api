@@ -132,66 +132,20 @@ type ArticleAPI struct {
 	CompatibleCars []CompatibleCarsResponse `json:"compatibleCars"`
 }
 
-func GetArticleItemsByVehicleIdAndCategoryId(vehicleID uint, categoryID uint, page int, limit int) (*[]ArticleItem, int64, error) {
-	var dbArticleItems []ArticleItem
-	var total int64
-
-	// Base query
-	baseQuery := database.DB.
-		Table("article_categories AS ac").
-		Joins("INNER JOIN article_vehicles AS av ON av.article_item_id = ac.article_item_id").
-		Where("ac.category_id = ?", categoryID)
-
-	// 👉 Apply vehicle filter ONLY if vehicleID != 0
-	if vehicleID != 0 {
-		baseQuery = baseQuery.Where("av.vehicle_id = ?", vehicleID)
-	}
-
-	// 1️⃣ Count total
-	if err := baseQuery.
-		Select("COUNT(DISTINCT ac.article_item_id)").
-		Scan(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	// 2️⃣ Pagination
-	offset := (page - 1) * limit
-
-	// 3️⃣ Get article IDs
-	var articleIDs []uint
-	idQuery := database.DB.
-		Table("article_categories AS ac").
-		Select("DISTINCT ac.article_item_id").
-		Joins("INNER JOIN article_vehicles AS av ON av.article_item_id = ac.article_item_id").
-		Where("ac.category_id = ?", categoryID)
-
-	if vehicleID != 0 {
-		idQuery = idQuery.Where("av.vehicle_id = ?", vehicleID)
-	}
-
-	if err := idQuery.
-		Order("ac.article_item_id DESC").
-		Limit(limit).
-		Offset(offset).
-		Pluck("ac.article_item_id", &articleIDs).Error; err != nil {
-		return nil, 0, err
-	}
-
-	// 4️⃣ Fetch details
-	if len(articleIDs) > 0 {
-		if err := database.DB.
-			Table("article_items AS ai").
-			Select("ai.*, GROUP_CONCAT(DISTINCT o.display_no SEPARATOR ', ') AS article_search_no").
-			Joins("LEFT JOIN article_oems AS ao ON ai.id = ao.article_item_id").
-			Joins("LEFT JOIN oems AS o ON ao.oem_id = o.id").
-			Where("ai.id IN ?", articleIDs).
-			Group("ai.id").
-			Find(&dbArticleItems).Error; err != nil {
-			return nil, 0, err
-		}
-	}
-
-	return &dbArticleItems, total, nil
+type ArticleItemWithCategory struct {
+	ID                 uint    `json:"ID"`
+	ArticleID          uint    `json:"articleId"`
+	ArticleNo          string  `json:"articleNo"`
+	ArticleSearchNo    string  `json:"articleSearchNo"`
+	ArticleProductName string  `json:"articleProductName"`
+	S3Image            string  `json:"s3image"`
+	SupplierName       string  `json:"supplierName"`
+	CategoryID         *uint   `json:"categoryId"`
+	CategoryName       *string `json:"categoryName"`
+	CategoryNameMn     *string `json:"categoryNameMN"`
+	Level              *int    `json:"level"`
+	Thumbnail          *string `json:"thumbnail"`
+	ParentID           *uint   `json:"parentId"`
 }
 
 func GetArticleItemsByOem(oem string, page int, limit int) (*[]ArticleItem, int64, error) {
