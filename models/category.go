@@ -122,3 +122,62 @@ func SeedCategories(jsonPath string) error {
 	categories := ParseCategoryMap(root, nil) // []*Category
 	return SaveCategoryRecursive(categories)
 }
+
+func flattenCategoriesMN(cat *CategoryJSON, result map[uint]string) {
+	if cat == nil {
+		return
+	}
+
+	// Optional: skip empty names
+	if cat.CategoryID != 0 && cat.CategoryName != "" {
+		result[cat.CategoryID] = cat.CategoryName
+	}
+
+	for _, child := range cat.Children {
+		flattenCategoriesMN(&child, result)
+	}
+}
+
+func LoadCategoryMap(filePath string) (map[uint]string, error) {
+	file, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var raw map[string]*CategoryJSON
+	if err := json.Unmarshal(file, &raw); err != nil {
+		return nil, err
+	}
+
+	result := make(map[uint]string, 1000) // small optimization
+
+	for _, root := range raw {
+		flattenCategoriesMN(root, result)
+	}
+
+	return result, nil
+}
+
+func UpdateCategoryNamesBatch(categoryMap map[uint]string) error {
+	if len(categoryMap) == 0 {
+		return nil
+	}
+
+	query := "UPDATE categories SET category_name_mn = CASE category_id "
+	args := make([]interface{}, 0, len(categoryMap)*2)
+	ids := make([]uint, 0, len(categoryMap))
+
+	for id, name := range categoryMap {
+		query += "WHEN ? THEN ? "
+		args = append(args, id, name)
+		ids = append(ids, id)
+	}
+
+	// ✅ FIX HERE
+	query += "END WHERE category_id IN ?"
+
+	// combine args
+	args = append(args, ids)
+
+	return database.DB.Exec(query, args...).Error
+}

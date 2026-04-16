@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"gocars-api/models"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,10 +16,10 @@ import (
 
 // BodyResponse represents the JSON returned from the API before decryption
 type BodyResponse struct {
-	Data    string `json:"data"`
-	Iv      string `json:"iv"`
-	Message string `json:"message"`
-	Success bool   `json:"success"`
+	Data    json.RawMessage `json:"data"`
+	Iv      *string         `json:"iv"`
+	Message string          `json:"message"`
+	Success bool            `json:"success"`
 }
 
 var visited = make(map[string]bool)
@@ -85,6 +86,7 @@ func FetchVehicleData(plate string) (*models.Vehicle, error) {
 	visited = make(map[string]bool)
 
 	startURL := os.Getenv("GARAGE_HOST") + "platenew?platenumber=" + url.QueryEscape(plate)
+
 	bodyResponse, err := crawl(startURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch garage API: %w", err)
@@ -94,16 +96,32 @@ func FetchVehicleData(plate string) (*models.Vehicle, error) {
 		return nil, fmt.Errorf("garage API returned nil body")
 	}
 
-	if bodyResponse.Data == "" || bodyResponse.Iv == "" {
-		return nil, fmt.Errorf("garage API returned empty data or IV")
+	if bodyResponse.Data == nil {
+		return nil, fmt.Errorf("garage API returned empty data")
 	}
 
-	vehicleInfo, err := DecryptAES256CBC(bodyResponse.Data, bodyResponse.Iv, os.Getenv("GARAGE_KEY"))
-	if err != nil {
-		return nil, fmt.Errorf("decryption failed: %w", err)
-	}
+	// ✅ Handle dynamic type based on IV
+	if bodyResponse.Iv == nil || *bodyResponse.Iv == "" {
+		var vehicleInfo models.Vehicle
+		if err := json.Unmarshal(bodyResponse.Data, &vehicleInfo); err != nil {
+			return nil, fmt.Errorf("failed to parse vehicle data: %w", err)
+		}
+		return &vehicleInfo, nil
+	} else {
+		// 🔐 Encrypted → data is STRING
+		var encrypted string
 
-	return vehicleInfo, nil
+		if err := json.Unmarshal(bodyResponse.Data, &encrypted); err != nil {
+			return nil, fmt.Errorf("failed to parse encrypted data: %w", err)
+		}
+
+		vehicleInfo, err := DecryptAES256CBC(encrypted, *bodyResponse.Iv, os.Getenv("GARAGE_KEY"))
+		if err != nil {
+			return nil, fmt.Errorf("decryption failed: %w", err)
+		}
+
+		return vehicleInfo, nil
+	}
 }
 
 // crawl fetches the API response and parses JSON into BodyResponse
@@ -130,6 +148,7 @@ func crawl(pageURL string) (*BodyResponse, error) {
 
 	var bodyResponse BodyResponse
 	if err := json.Unmarshal(bodyBytes, &bodyResponse); err != nil {
+		log.Println(err)
 		return nil, fmt.Errorf("failed to parse JSON: %w; raw: %s", err, string(bodyBytes))
 	}
 

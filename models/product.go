@@ -15,14 +15,16 @@ type Product struct {
 	SupplierName       string  `json:"supplierName" gorm:"column:supplier_name"`
 
 	CategoryID     *uint   `json:"categoryId" gorm:"column:category_id"`
-	CategoryName   *string `json:" categoryName" gorm:"column:category_name"`
+	CategoryName   *string `json:"categoryName" gorm:"column:category_name"`
 	CategoryNameMN *string `json:"categoryNameMN" gorm:"column:category_name_mn"`
-	Level          *int    `json:"level" gorm:"column:level"`
+	Level          *int    `json:"-" gorm:"column:level"`
 	Thumbnail      *string `json:"thumbnail" gorm:"column:thumbnail"`
-	ParentID       *uint   `json:"parentId" gorm:"column:parent_id"`
+	ParentID       *uint   `json:"-" gorm:"column:parent_id"`
 
 	OEMsRaw []byte `json:"-" gorm:"column:oems"`
-	OEMs    []OEM  `json:"oems" gorm:"-"`
+	OEMs    []OEM  `json:"-" gorm:"-"`
+
+	Priority int `json:"-" gorm:"column:priority"`
 }
 
 type OEM struct {
@@ -31,11 +33,10 @@ type OEM struct {
 }
 
 type ProductFilter struct {
-	Search     *string
-	VehicleID  *uint
-	CategoryID *uint
-	Page       int
-	Limit      int
+	Search    *string
+	VehicleID *uint
+	Page      int
+	Limit     int
 }
 
 func GetProducts(filter ProductFilter) ([]Product, int64, error) {
@@ -52,39 +53,9 @@ func GetProducts(filter ProductFilter) ([]Product, int64, error) {
 	like := "%" + search + "%"
 
 	// =========================
-	// ✅ COUNT QUERY
+	// ✅ BASE SUBQUERY
 	// =========================
-	countQuery := `
-	SELECT COUNT(DISTINCT ai.id)
-	FROM article_items ai
-	LEFT JOIN article_categories ac ON ac.article_item_id = ai.id
-	LEFT JOIN categories c ON ac.category_id = c.category_id
-	LEFT JOIN article_oems ao ON ao.article_item_id = ai.id
-	LEFT JOIN oems o ON ao.oem_id = o.id
-	WHERE 1=1
-	AND (
-		? = '' OR
-		ai.article_product_name LIKE ? OR
-		c.category_name LIKE ? OR
-		c.category_name_mn LIKE ? OR
-		o.display_no_clean LIKE CONCAT('%', REGEXP_REPLACE(?, '[^A-Za-z0-9]', ''), '%') OR
-		o.brand LIKE ?
-	)
-	`
-
-	countArgs := []interface{}{
-		search,
-		like, like, like, search, like,
-	}
-
-	if err := database.DB.Raw(countQuery, countArgs...).Scan(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	// =========================
-	// ✅ MAIN QUERY
-	// =========================
-	mainQuery := `
+	baseSubQuery := `
 	SELECT 
 		ai.id,
 		ai.article_id,
@@ -111,16 +82,7 @@ func GetProducts(filter ProductFilter) ([]Product, int64, error) {
 			)
 		END AS oems,
 
-		CASE 
-			WHEN ? != '' AND MAX(
-        		o.display_no_clean LIKE CONCAT('%', REGEXP_REPLACE(?, '[^A-Za-z0-9]', ''), '%')
-    		) THEN 1
-			WHEN ? != '' AND MAX(c.category_name LIKE ?) THEN 2
-			WHEN ? != '' AND MAX(c.category_name_mn LIKE ?) THEN 3
-			WHEN ? != '' AND MAX(ai.article_product_name LIKE ?) THEN 4
-			WHEN ? != '' AND MAX(o.brand LIKE ?) THEN 5
-			ELSE 6
-		END AS priority
+		GROUP_CONCAT(o.display_no_clean, ' ', o.brand) AS oems_text
 
 	FROM article_items ai
 
@@ -144,46 +106,145 @@ func GetProducts(filter ProductFilter) ([]Product, int64, error) {
 	) o ON o.article_item_id = ai.id
 
 	WHERE 1=1
-	AND (
-		? = '' OR
-		ai.article_product_name LIKE ? OR
-		c.category_name LIKE ? OR
-		c.category_name_mn LIKE ? OR
-		o.display_no_clean LIKE CONCAT('%', REGEXP_REPLACE(?, '[^A-Za-z0-9]', ''), '%') OR
-		o.brand LIKE ?
-	)
-
-	GROUP BY ai.id, c.category_id
-	ORDER BY priority ASC, ai.id DESC
-	LIMIT ? OFFSET ?
 	`
 
-	args := []interface{}{
-		// priority (10 args)
-		search, search,
-		search, like,
-		search, like,
-		search, like,
-		search, like,
+	baseArgs := []interface{}{}
 
-		// WHERE
-		search,
-		like, like, like,
-		search, // OEM raw (cleaned in SQL)
-		like,
-
-		// pagination
-		filter.Limit,
-		offset,
+	// 🚗 vehicle optional
+	if filter.VehicleID != nil {
+		baseSubQuery += `
+		AND EXISTS (
+			SELECT 1
+			FROM article_vehicles av
+			WHERE av.article_item_id = ai.id
+			AND av.vehicle_id = ?
+		)`
+		baseArgs = append(baseArgs, *filter.VehicleID)
 	}
 
-	if err := database.DB.Raw(mainQuery, args...).Scan(&products).Error; err != nil {
+	baseSubQuery += `
+	GROUP BY ai.id, c.category_id
+	`
+
+	// =========================
+	// ✅ COUNT QUERY
+	// =========================
+	countQuery := `
+	SELECT COUNT(*) FROM (
+		` + baseSubQuery + `
+	) AS results
+
+	WHERE (
+		? = '' OR
+		results.article_product_name LIKE ? OR
+		results.category_name LIKE ? OR
+		results.category_name_mn LIKE ? OR
+		results.supplier_name LIKE ? OR
+		results.oems_text LIKE ? OR
+		results.oems_text LIKE CONCAT('%', REGEXP_REPLACE(?, '[^[:alnum:]]', ''), '%')
+	)
+	`
+
+	countArgs := append([]interface{}{}, baseArgs...)
+	countArgs = append(countArgs,
+		search,
+		like, like, like, like,
+		like,
+		search, // 🔥 normalized OEM
+	)
+
+	if err := database.DB.Raw(countQuery, countArgs...).Scan(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
 	// =========================
-	// ✅ PARSE OEM JSON
+	// ✅ MAIN QUERY
 	// =========================
+	mainQuery := `
+	SELECT
+		results.id,
+		results.article_id,
+		results.article_no,
+		results.article_search_no,
+		results.article_product_name,
+		results.s3_image,
+		results.supplier_name,
+
+		results.category_id,
+		results.category_name,
+		results.category_name_mn,
+		results.level,
+		results.thumbnail,
+		results.parent_id,
+
+		results.oems,
+
+		CASE 
+			WHEN ? != '' AND results.oems_text LIKE CONCAT('%', REGEXP_REPLACE(?, '[^[:alnum:]]', ''), '%') THEN 1
+			WHEN ? != '' AND results.oems_text LIKE ? THEN 2
+			WHEN ? != '' AND results.category_name LIKE ? THEN 3
+			WHEN ? != '' AND results.category_name_mn LIKE ? THEN 4
+			WHEN ? != '' AND results.article_product_name LIKE ? THEN 5
+			WHEN ? != '' AND results.supplier_name LIKE ? THEN 6
+			ELSE 7
+		END AS priority
+
+	FROM (
+		` + baseSubQuery + `
+	) AS results
+
+	WHERE (
+		? = '' OR
+		results.article_product_name LIKE ? OR
+		results.category_name LIKE ? OR
+		results.category_name_mn LIKE ? OR
+		results.supplier_name LIKE ? OR
+		results.oems_text LIKE ? OR
+		results.oems_text LIKE CONCAT('%', REGEXP_REPLACE(?, '[^[:alnum:]]', ''), '%')
+	)
+
+	ORDER BY priority ASC, id DESC
+	LIMIT ? OFFSET ?
+	`
+
+	mainArgs := []interface{}{}
+
+	// 1️⃣ priority
+	mainArgs = append(mainArgs,
+		search, search, // normalized OEM
+		search, like,
+		search, like,
+		search, like,
+		search, like,
+		search, like,
+	)
+
+	// 2️⃣ vehicle
+	mainArgs = append(mainArgs, baseArgs...)
+
+	// 3️⃣ WHERE
+	mainArgs = append(mainArgs,
+		search,
+		like, like, like, like,
+		like,
+		search, // normalized OEM
+	)
+
+	// 4️⃣ pagination
+	mainArgs = append(mainArgs,
+		filter.Limit,
+		offset,
+	)
+
+	if err := database.DB.Raw(mainQuery, mainArgs...).Scan(&products).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if products == nil {
+		products = []Product{}
+	}
+
+	// OEM parse
 	for i := range products {
 		if len(products[i].OEMsRaw) > 0 {
 			if err := json.Unmarshal(products[i].OEMsRaw, &products[i].OEMs); err != nil {

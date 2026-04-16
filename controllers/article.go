@@ -16,8 +16,6 @@ func Article(c *gin.Context) {
 	page := utils.AtoiDefault(c.DefaultQuery("page", ""), 1)
 	limit := utils.AtoiDefault(c.DefaultQuery("limit", ""), 20)
 
-	log.Printf("Received request for article detail. ID: %d, ArticleID: %d, Page: %d, Limit: %d", id, articleID, page, limit)
-
 	res, err := services.GetArticleDetail(id, articleID, page, limit)
 	if err != nil {
 		log.Printf("Error fetching article detail: %v", err)
