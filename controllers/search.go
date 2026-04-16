@@ -12,7 +12,6 @@ import (
 func Search(c *gin.Context) {
 	query := c.DefaultQuery("query", "")
 	vehicle_id := c.DefaultQuery("vehicle_id", "")
-	category_id := c.DefaultQuery("category_id", "")
 
 	// Pagination query params
 	pageStr := c.DefaultQuery("page", "1")
@@ -33,11 +32,10 @@ func Search(c *gin.Context) {
 	}
 
 	filter := models.ProductFilter{
-		Search:     &query,
-		VehicleID:  utils.StringToUintPtr(vehicle_id),
-		CategoryID: utils.StringToUintPtr(category_id),
-		Page:       page,
-		Limit:      limit,
+		Search:    &query,
+		VehicleID: utils.StringToUintPtr(vehicle_id),
+		Page:      page,
+		Limit:     limit,
 	}
 
 	products, total, err := models.GetProducts(filter)

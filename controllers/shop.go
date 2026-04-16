@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"gocars-api/models"
+	"gocars-api/repositories"
 	"gocars-api/utils"
 	"net/http"
 
@@ -27,7 +28,7 @@ func Shop(c *gin.Context) {
 	}
 
 	// Try reading from DB first
-	articles, total, err := models.GetArticleItemsByVehicleIdAndCategoryId(vehicleID, categoryID, page, limit)
+	articles, total, err := repositories.GetArticleItemsByVehicleIdAndCategoryId(vehicleID, categoryID, page, limit)
 	if err == nil && total > 0 {
 		c.JSON(http.StatusOK, gin.H{
 			"page":     page,
