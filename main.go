@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"gocars-api/commands"
+	"gocars-api/config"
 	"gocars-api/controllers"
 	"gocars-api/database"
 	"gocars-api/middleware"
@@ -15,21 +16,15 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	// ===============================
-	// Environment
-	// ===============================
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file loaded, using environment variables")
-	}
+	cfg := config.Load()
 
 	// ===============================
 	// Database init
 	// ===============================
-	database.InitDB()
+	database.InitDB(cfg)
 
 	// Define CLI flag
 	runSync := flag.Bool("commands-sync", false, "Run sync command")
@@ -45,7 +40,7 @@ func main() {
 
 	var router *gin.Engine
 
-	if os.Getenv("MODE") == "PRODUCTION" {
+	if cfg.MODE == "PRODUCTION" {
 		gin.SetMode(gin.ReleaseMode)
 		router = gin.New()
 		router.Use(gin.Logger())
@@ -130,6 +125,7 @@ func main() {
 	router.GET("/vehicle", controllers.FetchData)
 	router.GET("/search", controllers.Search)
 	router.GET("/shop", controllers.Shop)
+	router.GET("/oems", controllers.GetOEMs)
 
 	// router.GET("/decode", controllers.Decode)
 
@@ -137,8 +133,12 @@ func main() {
 
 	// router.GET("/article-seeder", controllers.FillArticleItemData)
 	router.GET("/article", controllers.Article)
-	router.GET("/openai", controllers.GetResponse)
-	router.GET("/openai_mapper", controllers.GetMapper)
+	router.POST("/order", controllers.CreateOrder)
+	router.GET("/order/:id", controllers.GetOrder)
+	router.GET("/orders/:id/pdf", controllers.GetOrderPDF)
+
+	// router.GET("/openai", controllers.GetResponse)
+	// router.GET("/openai_mapper", controllers.GetMapper)
 
 	// router.GET("/category-seeder", controllers.FillCategories)
 
@@ -146,7 +146,6 @@ func main() {
 	authorized := router.Group("/")
 	authorized.Use(middleware.AuthRequired())
 	authorized.GET("/profile", controllers.Profile)
-	authorized.POST("/order", controllers.CreateOrder)
 
 	router.Run(":9000")
 }
