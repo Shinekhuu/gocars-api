@@ -71,25 +71,14 @@ type ArticleVehicles struct {
 	gorm.Model
 	VehicleID     uint `json:"vehicleId" gorm:"column:vehicle_id;uniqueIndex:idx_article_vehicle;"`
 	ArticleItemID uint `json:"articleItemId" gorm:"column:article_item_id;uniqueIndex:idx_article_vehicle;"`
+
+	Engine Engine `gorm:"foreignKey:VehicleID;references:VehicleID;constraint:OnDelete:CASCADE"`
 }
 
 type VehicleArticlesResponse struct {
 	VehicleID  string        `json:"vehicleId"`
 	CategoryID string        `json:"categoryId"` // optional
 	Articles   []ArticleItem `json:"articles"`   // must match JSON
-}
-
-type OemArticleResponse struct {
-	Articles []ArticleItem `json:"articles"` // must match JSON
-}
-
-type Oem struct {
-	gorm.Model
-	Brand     string `json:"brand" gorm:"type:varchar(255);uniqueIndex:idx_oem"`
-	DisplayNo string `json:"displayNo" gorm:"type:varchar(255);uniqueIndex:idx_oem"`
-
-	// 🔥 NEW: cleaned version (for fast search)
-	DisplayNoClean string `json:"-" gorm:"type:varchar(255);index"`
 }
 
 type ArticleOem struct {
@@ -148,6 +137,11 @@ type ArticleItemWithCategory struct {
 	ParentID           *uint   `json:"parentId"`
 }
 
+type RapidOEMResponse struct {
+	CountArticles int           `json:"countArticles"`
+	Articles      []ArticleItem `json:"articles"`
+}
+
 func GetArticleItemsByOem(oem string, page int, limit int) (*[]ArticleItem, int64, error) {
 	var dbArticleItems []ArticleItem
 	var total int64
@@ -192,7 +186,7 @@ func GetArticleItemsByOem(oem string, page int, limit int) (*[]ArticleItem, int6
 func GetArticleItemsFromRapidAPI(vehicleID uint, categoryID uint) (*VehicleArticlesResponse, error) {
 	// 1️⃣ Fetch from HTTP API
 	url := fmt.Sprintf(
-		"https://tecdoc-catalog.p.rapidapi.com/articles/list/type-id/1/vehicle-id/%d/category-id/%d/lang-id/4",
+		"https://auto-parts-catalog.p.rapidapi.com/articles/list/type-id/1/vehicle-id/%d/category-id/%d/lang-id/4",
 		vehicleID,
 		categoryID,
 	)
@@ -254,11 +248,11 @@ func GetArticleItemsFromRapidAPI(vehicleID uint, categoryID uint) (*VehicleArtic
 }
 
 func GetArticleItemsByOemFromRapidAPI(oem string) ([]ArticleItem, error) {
-	var articles []ArticleItem
+	var rapidOEMResponse RapidOEMResponse
 
 	// 1️⃣ Fetch from HTTP API
 	url := fmt.Sprintf(
-		"https://tecdoc-catalog.p.rapidapi.com/articles-oem/search-by-article-oem-no/lang-id/4/article-oem-no/%s",
+		"https://auto-parts-catalog.p.rapidapi.com/articles-oem/search-by-article-oem-no?lang-id=4&articleNo=%s&articleType=OENumber",
 		oem,
 	)
 
@@ -282,7 +276,7 @@ func GetArticleItemsByOemFromRapidAPI(oem string) ([]ArticleItem, error) {
 	}
 
 	// 2️⃣ Parse JSON --> articles (slice)
-	if err := json.Unmarshal(body, &articles); err != nil {
+	if err := json.Unmarshal(body, &rapidOEMResponse); err != nil {
 		return nil, fmt.Errorf("error parsing JSON: %w", err)
 	}
 
@@ -290,8 +284,8 @@ func GetArticleItemsByOemFromRapidAPI(oem string) ([]ArticleItem, error) {
 	// Save asynchronously
 	go func() {
 		err := database.DB.Transaction(func(tx *gorm.DB) error {
-			for i := range articles {
-				article := articles[i]
+			for i := range rapidOEMResponse.Articles {
+				article := rapidOEMResponse.Articles[i]
 
 				// MUST USE POINTER
 				if err := tx.
@@ -335,7 +329,7 @@ func GetArticleItemsByOemFromRapidAPI(oem string) ([]ArticleItem, error) {
 		}
 	}()
 
-	return articles, nil
+	return rapidOEMResponse.Articles, nil
 }
 
 // categories is a JSON string like "[1,2,3]"

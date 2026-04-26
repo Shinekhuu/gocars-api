@@ -2,8 +2,8 @@ package database
 
 import (
 	"fmt"
+	"gocars-api/config"
 	"log"
-	"os"
 	"time"
 
 	"gorm.io/driver/mysql"
@@ -13,13 +13,13 @@ import (
 
 var DB *gorm.DB
 
-func InitDB() {
+func InitDB(cfg config.Config) {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"),
+		cfg.DB_USER,
+		cfg.DB_PASSWORD,
+		cfg.DB_HOST,
+		cfg.DB_PORT,
+		cfg.DB_NAME,
 	)
 
 	var err error

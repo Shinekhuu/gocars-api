@@ -76,7 +76,7 @@ func GetModelByName(manufacturerID uint, modelName string, buildDate string) (*M
 
 func GetModelsFromRapidAPI(manufacturerID uint) (*ModelResponse, error) {
 	url := fmt.Sprintf(
-		"https://tecdoc-catalog.p.rapidapi.com/models/list/type-id/1/manufacturer-id/%d/lang-id/4/country-filter-id/125",
+		"https://auto-parts-catalog.p.rapidapi.com/models/list/type-id/1/manufacturer-id/%d/lang-id/4/country-filter-id/125",
 		manufacturerID,
 	)
 
