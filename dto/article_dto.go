@@ -22,14 +22,14 @@ type ArticleDTO struct {
 	S3Image              string `json:"s3image"`
 }
 
-type OemDTO struct {
-	Brand     string `json:"brand"`
-	DisplayNo string `json:"displayNo"`
-}
-
 type PaginationDTO struct {
 	Page  int         `json:"page"`
 	Limit int         `json:"limit"`
 	Total int64       `json:"total"`
 	Data  interface{} `json:"data"`
+}
+
+type AllSpecificationDTO struct {
+	CriteriaName  string `json:"criteriaName"`
+	CriteriaValue string `json:"CriteriaValue"`
 }

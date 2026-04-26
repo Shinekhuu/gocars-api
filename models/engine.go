@@ -91,7 +91,7 @@ func GetEngineByName(manufacturerID uint, modelID uint, frame string) (*[]Engine
 
 func GetEnginesFromRapidAPI(ManufacturerID uint, ModelID uint) (*EngineResponse, error) {
 	url := fmt.Sprintf(
-		"https://tecdoc-catalog.p.rapidapi.com/types/type-id/1/list-vehicles-types/%d/lang-id/4/country-filter-id/125",
+		"https://auto-parts-catalog.p.rapidapi.com/types/type-id/1/list-vehicles-types/%d/lang-id/4/country-filter-id/125",
 		ModelID,
 	)
 

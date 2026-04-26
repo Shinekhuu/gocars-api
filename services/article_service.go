@@ -34,7 +34,6 @@ func GetArticleDetail(id int, articleID int, page int, limit int) (*dto.ArticleR
 	article, err = repositories.FindArticle(id, articleID)
 
 	if err == nil && article.ID != 0 {
-
 		if article.IsFetched || article.ArticleID == nil {
 			engines, total, _ := repositories.GetEngines(article.ID, offset, limit)
 			return mappers.ToDBResponse(article, engines, total, page, limit), nil
@@ -48,39 +47,22 @@ func GetArticleDetail(id int, articleID int, page int, limit int) (*dto.ArticleR
 	// 2️⃣ Call API (ONLY ONCE)
 	// ==========================
 	if articleID == 0 {
-		return nil, errors.New("invalid article_id")
+		return mappers.ToDBResponse(article, nil, 0, page, limit), nil
 	}
 
-	apiData, err := getArticleCompleteDetailFromRapidAPI(articleID)
-	log.Printf("API call → article_id=%d, err=%v", articleID, err)
-
-	if err != nil || apiData == nil {
-		if article.ID != 0 {
-			return mappers.ToDBResponse(article, nil, 0, page, limit), nil
-		}
-		return nil, errors.New("failed to fetch article from API")
-	}
-
-	// ==========================
-	// 3️⃣ PUSH TO WORKER (SAFE)
-	// ==========================
-	select {
-	case workers.ArticleQueue <- *apiData:
-		log.Printf("📥 queued article_id=%d", articleID)
-	default:
-		log.Println("⚠️ queue full, skip")
-	}
-
-	return mappers.ToAPIResponse(*apiData, page, limit, offset), nil
+	return GetArticleCompleteDetailFromRapidAPI(articleID, page, limit, offset)
 }
 
 // ==========================
 // API FETCH
 // ==========================
-func getArticleCompleteDetailFromRapidAPI(articleID int) (*models.ArticleItem, error) {
+func GetArticleCompleteDetailFromRapidAPI(articleID int, page int, limit int, offset int) (*dto.ArticleResponse, error) {
+	if articleID == 0 {
+		return nil, errors.New("invalid article_id")
+	}
 
 	url := fmt.Sprintf(
-		"https://tecdoc-catalog.p.rapidapi.com/articles/article-complete-details/type-id/1?articleId=%d&langId=4&countryFilterId=125",
+		"https://auto-parts-catalog.p.rapidapi.com/articles/article-complete-details/type-id/1?articleId=%d&langId=4&countryFilterId=125",
 		articleID,
 	)
 
@@ -133,5 +115,15 @@ func getArticleCompleteDetailFromRapidAPI(articleID int) (*models.ArticleItem, e
 		CompatibleCarsResponse: api.CompatibleCars,
 	}
 
-	return &article, nil
+	// ==========================
+	// 3️⃣ PUSH TO WORKER (SAFE)
+	// ==========================
+	select {
+	case workers.ArticleQueue <- article:
+		log.Printf("📥 queued article_id=%d", articleID)
+	default:
+		log.Println("⚠️ queue full, skip")
+	}
+
+	return mappers.ToAPIResponse(article, page, limit, offset), nil
 }

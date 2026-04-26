@@ -54,6 +54,19 @@ func UintPtrOrNilFromUint(v uint) *uint {
 	return &v
 }
 
+func UintToIntPtr(u uint) *int {
+	i := int(u)
+	return &i
+}
+
+func UintPtrToIntPtr(u *uint) *int {
+	if u == nil {
+		return nil
+	}
+	i := int(*u)
+	return &i
+}
+
 func IntValue(i *int) int {
 	if i != nil {
 		return *i
