@@ -13,6 +13,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
+	"time"
 )
 
 func GetArticleDetail(id int, articleID int, page int, limit int) (*dto.ArticleResponse, error) {
@@ -126,4 +128,76 @@ func GetArticleCompleteDetailFromRapidAPI(articleID int, page int, limit int, of
 	}
 
 	return mappers.ToAPIResponse(article, page, limit, offset), nil
+}
+
+const FetchTTL = 30 * 24 * time.Hour
+
+var refreshLocks sync.Map
+
+func ShouldRefetch(
+	vehicleID uint,
+	categoryID uint,
+) bool {
+
+	log, err := repositories.GetAPIFetchLog(
+		vehicleID,
+		categoryID,
+	)
+
+	if err != nil {
+		return true
+	}
+
+	if log == nil {
+		return true
+	}
+
+	return time.Since(
+		log.LastFetchedAt,
+	) > FetchTTL
+}
+
+func RefreshArticlesAsync(
+	vehicleID uint,
+	categoryID uint,
+) {
+
+	key := makeKey(
+		vehicleID,
+		categoryID,
+	)
+
+	_, loaded :=
+		refreshLocks.LoadOrStore(
+			key,
+			true,
+		)
+
+	if loaded {
+		return
+	}
+
+	go func() {
+
+		defer refreshLocks.Delete(
+			key,
+		)
+
+		_, _ = GetArticleItemsFromRapidAPI(
+			vehicleID,
+			categoryID,
+		)
+
+	}()
+}
+
+func makeKey(
+	vehicleID uint,
+	categoryID uint,
+) string {
+	return fmt.Sprintf(
+		"%d:%d",
+		vehicleID,
+		categoryID,
+	)
 }
