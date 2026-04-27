@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"gocars-api/database"
-	"gocars-api/utils"
 	"io"
 	"log"
 	"net/http"
@@ -183,69 +182,69 @@ func GetArticleItemsByOem(oem string, page int, limit int) (*[]ArticleItem, int6
 	return &dbArticleItems, total, nil
 }
 
-func GetArticleItemsFromRapidAPI(vehicleID uint, categoryID uint) (*VehicleArticlesResponse, error) {
-	// 1️⃣ Fetch from HTTP API
-	url := fmt.Sprintf(
-		"https://auto-parts-catalog.p.rapidapi.com/articles/list/type-id/1/vehicle-id/%d/category-id/%d/lang-id/4",
-		vehicleID,
-		categoryID,
-	)
+// func GetArticleItemsFromRapidAPI(vehicleID uint, categoryID uint) (*VehicleArticlesResponse, error) {
+// 	// 1️⃣ Fetch from HTTP API
+// 	url := fmt.Sprintf(
+// 		"https://auto-parts-catalog.p.rapidapi.com/articles/list/type-id/1/vehicle-id/%d/category-id/%d/lang-id/4",
+// 		vehicleID,
+// 		categoryID,
+// 	)
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error creating request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-rapidapi-key", os.Getenv("X_RAPIDAPI_KEY"))
-	req.Header.Set("x-rapidapi-host", os.Getenv("X_RAPIDAPI_HOST"))
+// 	req, err := http.NewRequest("GET", url, nil)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("error creating request: %w", err)
+// 	}
+// 	req.Header.Set("Content-Type", "application/json")
+// 	req.Header.Set("x-rapidapi-key", os.Getenv("X_RAPIDAPI_KEY"))
+// 	req.Header.Set("x-rapidapi-host", os.Getenv("X_RAPIDAPI_HOST"))
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("error reading response: %w", err)
-	}
-	defer resp.Body.Close()
+// 	resp, err := http.DefaultClient.Do(req)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("error reading response: %w", err)
+// 	}
+// 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error reading response: %w", err)
-	}
+// 	body, err := io.ReadAll(resp.Body)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("error reading response: %w", err)
+// 	}
 
-	var vehicleArticlesResponse VehicleArticlesResponse
-	if err := json.Unmarshal(body, &vehicleArticlesResponse); err != nil {
-		return nil, fmt.Errorf("error parsing JSON: %w", err)
-	}
+// 	var vehicleArticlesResponse VehicleArticlesResponse
+// 	if err := json.Unmarshal(body, &vehicleArticlesResponse); err != nil {
+// 		return nil, fmt.Errorf("error parsing JSON: %w", err)
+// 	}
 
-	// Save to DB for future requests
-	go func() {
-		for i := range vehicleArticlesResponse.Articles {
-			article := &vehicleArticlesResponse.Articles[i]
-			_ = database.DB.
-				Where(ArticleItem{ArticleID: article.ArticleID}).
-				Assign(article).
-				FirstOrCreate(article)
+// 	// Save to DB for future requests
+// 	go func() {
+// 		for i := range vehicleArticlesResponse.Articles {
+// 			article := &vehicleArticlesResponse.Articles[i]
+// 			_ = database.DB.
+// 				Where(ArticleItem{ArticleID: article.ArticleID}).
+// 				Assign(article).
+// 				FirstOrCreate(article)
 
-			av := ArticleVehicles{
-				ArticleItemID: article.ID,
-				VehicleID:     utils.AtoiUint(vehicleArticlesResponse.VehicleID),
-			}
-			_ = database.DB.
-				Where("vehicle_id = ? AND article_item_id = ?", av.VehicleID, av.ArticleItemID).
-				Assign(av).
-				FirstOrCreate(&av)
+// 			av := ArticleVehicles{
+// 				ArticleItemID: article.ID,
+// 				VehicleID:     utils.AtoiUint(vehicleArticlesResponse.VehicleID),
+// 			}
+// 			_ = database.DB.
+// 				Where("vehicle_id = ? AND article_item_id = ?", av.VehicleID, av.ArticleItemID).
+// 				Assign(av).
+// 				FirstOrCreate(&av)
 
-			ac := ArticleCategory{
-				ArticleItemID: article.ID,
-				CategoryID:    utils.AtoiUint(vehicleArticlesResponse.CategoryID),
-			}
-			_ = database.DB.
-				Where("category_id = ? AND article_item_id = ?", ac.CategoryID, av.ArticleItemID).
-				Assign(ac).
-				FirstOrCreate(&ac)
-		}
-	}()
+// 			ac := ArticleCategory{
+// 				ArticleItemID: article.ID,
+// 				CategoryID:    utils.AtoiUint(vehicleArticlesResponse.CategoryID),
+// 			}
+// 			_ = database.DB.
+// 				Where("category_id = ? AND article_item_id = ?", ac.CategoryID, av.ArticleItemID).
+// 				Assign(ac).
+// 				FirstOrCreate(&ac)
+// 		}
+// 	}()
 
-	return &vehicleArticlesResponse, nil
-}
+// 	return &vehicleArticlesResponse, nil
+// }
 
 func GetArticleItemsByOemFromRapidAPI(oem string) ([]ArticleItem, error) {
 	var rapidOEMResponse RapidOEMResponse

@@ -37,8 +37,10 @@ func (r *OrderRepository) GetOrderForPDF(id int) (*models.Order, error) {
 		Preload("Invoice").
 		Preload("OrderItems").
 		Preload("OrderItems.ArticleItem").
-		Preload("OrderItems.ArticleItem.AllOems").
-		Preload("OrderItems.ArticleItem.AllOems.Oem"). // IMPORTANT
+		Preload("OrderItems.ArticleItem.AllOems", func(db *gorm.DB) *gorm.DB {
+			return db.Limit(100)
+		}).
+		Preload("OrderItems.ArticleItem.AllOems.Oem").
 		Preload("OrderItems.ArticleItem.AllSpecifications").
 		First(&order, id).Error
 
