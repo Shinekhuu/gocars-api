@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"gocars-api/models"
 	"gocars-api/repositories"
+	"gocars-api/services"
 	"gocars-api/utils"
 	"net/http"
 
@@ -10,60 +10,186 @@ import (
 )
 
 func Shop(c *gin.Context) {
-	vehicleIDStr := c.DefaultQuery("vehicle_id", "0")
-	categoryIDStr := c.DefaultQuery("category_id", "100260")
-	pageStr := c.DefaultQuery("page", "1")
-	limitStr := c.DefaultQuery("limit", "40")
 
-	vehicleID := utils.AtoiUint(vehicleIDStr)
-	categoryID := utils.AtoiUint(categoryIDStr)
+	vehicleIDStr :=
+		c.DefaultQuery(
+			"vehicle_id",
+			"0",
+		)
+
+	categoryIDStr :=
+		c.DefaultQuery(
+			"category_id",
+			"100260",
+		)
+
+	pageStr :=
+		c.DefaultQuery(
+			"page",
+			"1",
+		)
+
+	limitStr :=
+		c.DefaultQuery(
+			"limit",
+			"40",
+		)
+
+	vehicleID :=
+		utils.AtoiUint(
+			vehicleIDStr,
+		)
+
+	categoryID :=
+		utils.AtoiUint(
+			categoryIDStr,
+		)
+
 	page := utils.Atoi(pageStr)
 	limit := utils.Atoi(limitStr)
 
 	if page < 1 {
 		page = 1
 	}
+
 	if limit < 1 {
 		limit = 40
 	}
 
-	// Try reading from DB first
-	articles, total, err := repositories.GetArticleItemsByVehicleIdAndCategoryId(vehicleID, categoryID, page, limit)
-	if err == nil && total > 0 {
-		c.JSON(http.StatusOK, gin.H{
-			"page":     page,
-			"limit":    limit,
-			"total":    total,
-			"articles": articles,
-			"api":      "db",
-		})
-		return
-	}
+	// ----------------------
+	// DB first
+	// ----------------------
+	articles,
+		total,
+		err :=
+		repositories.GetArticleItemsByVehicleIdAndCategoryId(
+			vehicleID,
+			categoryID,
+			page,
+			limit,
+		)
 
-	// Otherwise, fetch from API
-	apiData, err := models.GetArticleItemsFromRapidAPI(vehicleID, categoryID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(
+			http.StatusInternalServerError,
+			gin.H{
+				"error": "db error",
+			},
+		)
 		return
 	}
 
-	// Apply pagination manually (API returns full list)
+	// ----------------------
+	// DB has records
+	// return immediately
+	// stale? background refresh
+	// ----------------------
+	if total > 0 {
+
+		// backfill fetch log for legacy rows
+		if vehicleID != 0 {
+
+			go func() {
+				_ = repositories.
+					EnsureAPIFetchLog(
+						vehicleID,
+						categoryID,
+					)
+			}()
+
+			if services.ShouldRefetch(
+				vehicleID,
+				categoryID,
+			) {
+				services.RefreshArticlesAsync(
+					vehicleID,
+					categoryID,
+				)
+			}
+		}
+
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"page":     page,
+				"limit":    limit,
+				"total":    total,
+				"articles": articles,
+				"api":      "db",
+			},
+		)
+
+		return
+	}
+
+	// ---------------------------------
+	// vehicle_id missing?
+	// do NOT call third-party
+	// ---------------------------------
+	if vehicleID == 0 {
+
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"page":     page,
+				"limit":    limit,
+				"total":    0,
+				"articles": []any{},
+				"api":      "db",
+			},
+		)
+
+		return
+	}
+
+	// ----------------------
+	// DB empty
+	// live third party
+	// ----------------------
+	apiData,
+		err :=
+		services.GetArticleItemsFromRapidAPI(
+			vehicleID,
+			categoryID,
+		)
+
+	if err != nil {
+		c.JSON(
+			http.StatusInternalServerError,
+			gin.H{
+				"error": err.Error(),
+			},
+		)
+		return
+	}
+
 	start := (page - 1) * limit
 	end := start + limit
+
 	if start > len(apiData.Articles) {
-		start = len(apiData.Articles)
-	}
-	if end > len(apiData.Articles) {
-		end = len(apiData.Articles)
+		start = len(
+			apiData.Articles,
+		)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"page":     page,
-		"limit":    limit,
-		"total":    len(apiData.Articles),
-		"articles": apiData.Articles[start:end],
-		"api":      "api",
-	})
+	if end > len(apiData.Articles) {
+		end = len(
+			apiData.Articles,
+		)
+	}
+
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"page":  page,
+			"limit": limit,
+			"total": len(
+				apiData.Articles,
+			),
+			"articles": apiData.Articles[start:end],
+			"api":      "api",
+		},
+	)
 }
 
 // func FillArticleItemData(c *gin.Context) {

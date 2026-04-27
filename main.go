@@ -78,6 +78,7 @@ func main() {
 			&models.ModelFamily{},
 			&models.ArticleAllSpecification{},
 			&models.ArticleVehicles{},
+			&models.APIFetchLog{},
 		); err != nil {
 			log.Fatal("Failed to migrate database:", err)
 		}
