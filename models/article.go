@@ -295,7 +295,7 @@ func GetArticleItemsByOemFromRapidAPI(oem string) ([]ArticleItem, error) {
 				}
 
 				newOem := Oem{
-					Brand:     article.ManufacturerName,
+					Brand:     article.SupplierName,
 					DisplayNo: oem,
 				}
 
