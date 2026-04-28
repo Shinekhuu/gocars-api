@@ -251,7 +251,7 @@ func GetArticleItemsByOemFromRapidAPI(oem string) ([]ArticleItem, error) {
 
 	// 1️⃣ Fetch from HTTP API
 	url := fmt.Sprintf(
-		"https://auto-parts-catalog.p.rapidapi.com/articles-oem/search-by-article-oem-no?lang-id=4&articleNo=%s&articleType=OENumber",
+		"https://auto-parts-catalog.p.rapidapi.com/artlookup/search-articles-by-article-no??lang-id=4&articleNo=%s&articleType=OENumber",
 		oem,
 	)
 
