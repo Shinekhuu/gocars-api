@@ -1,14 +1,85 @@
-# RadidAPI + OpenAI + MySQL Data Flow (ETL Pipeline)
+gocars-api/
+├── cmd/
+│   └── api/
+│       └── main.go
+│
+├── internal/
+│   ├── config/
+│   ├── server/
+│   ├── middleware/
+│   │
+│   ├── database/
+│   │   ├── mysql/
+│   │   └── migrations/
+│   │
+│   ├── articles/
+│   │   ├── repository/
+│   │   │   ├── mysql/
+│   │   │   │   └── model/
+│   │   │   │
+│   │   │   └── meilisearch/
+│   │   │
+│   │   ├── service/
+│   │   │
+│   │   ├── handler/
+│   │   │   ├── http/
+│   │   │   └── dto/
+│   │   │
+│   │   └── jobs/
+│   │
+│   ├── vehicle/
+│   │   ├── repository/
+│   │   ├── service/
+│   │   └── handler/
+│   │
+│   ├── roder/
+│   │   ├── repository/
+│   │   ├── service/
+│   │   └── handler/
+│   │
+│   └── search/
+│       ├── meili/
+│       │
+│       └── models/
+│
+├── deployments/
+│   ├── docker/
+│   │   ├── Dockerfile
+│   │   └── docker-compose.yml
+│   │
+│   └── kubernetes/
+│
+├── scripts/
+│
+├── .env
+├── go.mod
+└── README.md
 
----
 
-## Architecture Diagram
+Recommended final scalable structure:
 
-```mermaid
-flowchart TD
-    A[Load CSV file] --> B{Call Rapid API / Get Article list. If article found?}
-    B --> Yes --> C[Process / Transform Data]
-    B --> No --> D[Call OpenAI API / Get OEM matched vehicle engines and matches category options list]
-    C --> E[Insert / Index Data into MySQL]
-    D --> E[Insert / Index Data into MySQL]
-```
+internal/
+├── auth/
+├── user/
+├── parts/
+├── vehicle/
+├── inventory/
+├── order/
+├── payment/
+├── search/
+├── notification/
+└── shared/
+
+shared/ can contain:
+
+shared/
+├── errors/
+├── response/
+├── pagination/
+├── validator/
+├── logger/
+└── utils/
+
+parts/ can contains articles
+
+Avoid dumping business logic into shared.
