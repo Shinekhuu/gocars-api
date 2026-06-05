@@ -233,4 +233,4 @@ This executes the language synchronization worker instead of starting the HTTP s
 
 ## License
 
-This project is provided for educational and portfolio purposes.
+Licensed under the MIT License.
