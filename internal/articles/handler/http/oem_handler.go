@@ -48,7 +48,7 @@ func (h *OemHandler) GetOEMs(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func GetResponse(c *gin.Context) {
+func (h *OemHandler) GetAIPart(c *gin.Context) {
 	oem := c.DefaultQuery("oem", "")
 	name := c.DefaultQuery("name", "")
 	brand := c.DefaultQuery("brand", "")
@@ -64,7 +64,7 @@ func GetResponse(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"responses": car})
 }
 
-func GetMapper(c *gin.Context) {
+func (h *OemHandler) GetAIMapper(c *gin.Context) {
 	name := c.DefaultQuery("name", "")
 	oem := c.DefaultQuery("oem", "")
 	brand := c.DefaultQuery("brand", "")

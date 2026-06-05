@@ -4,6 +4,7 @@ import (
 	articlehandler "gocars-api/internal/articles/handler/http"
 	articlesrepo "gocars-api/internal/articles/repository/postgresql"
 	articlessvc "gocars-api/internal/articles/service"
+	"gocars-api/internal/config"
 	profilehandler "gocars-api/internal/profile/handler"
 	profilerepo "gocars-api/internal/profile/repository/postgresql"
 	profilesvc "gocars-api/internal/profile/service"
@@ -60,7 +61,7 @@ type App struct {
 	VinHdl          *vehiclehandler.VinHandler
 }
 
-func NewApp(db *gorm.DB) *App {
+func NewApp(db *gorm.DB, cfg config.Config) *App {
 	// Articles
 	productRepo  := articlesrepo.NewProductRepository(db)
 	articleRepo  := articlesrepo.NewArticleRepository(db)
@@ -102,14 +103,18 @@ func NewApp(db *gorm.DB) *App {
 	manufacturerSvc := vehiclesvc.NewManufacturerService(manufacturerRepo)
 	vehicleCoreSvc  := vehiclesvc.NewVehicleService(xyrRepo, engineRepo)
 
+	// Vehicle services (extras)
+	crawlerSvc := vehiclesvc.NewCrawlerService(cfg.GARAGE_HOST)
+	vinSvc     := vehiclesvc.NewVinService()
+
 	// Vehicle handlers
 	vehicleHdl      := vehiclehandler.NewVehicleHandler(vehicleCoreSvc, engineSvc, modelSvc)
 	engineHdl       := vehiclehandler.NewEngineHandler(engineSvc)
 	modelHdl        := vehiclehandler.NewModelHandler(modelSvc)
 	manufacturerHdl := vehiclehandler.NewManufacturerHandler(manufacturerSvc)
-	crawlerHdl      := vehiclehandler.NewCrawlerHandler()
-	todoHdl         := vehiclehandler.NewTodoHandler(manufacturerSvc, modelSvc, engineSvc)
-	vinHdl          := vehiclehandler.NewVinHandler()
+	crawlerHdl      := vehiclehandler.NewCrawlerHandler(crawlerSvc)
+	todoHdl         := vehiclehandler.NewTodoHandler(vehicleCoreSvc, manufacturerSvc, modelSvc, engineSvc)
+	vinHdl          := vehiclehandler.NewVinHandler(vinSvc)
 
 	return &App{
 		// Articles
