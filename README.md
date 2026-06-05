@@ -96,8 +96,8 @@ docker run -p 9000:9000 --env-file ./env/dev/api.env gocars-api
 | `X_RAPIDAPI_KEY` | RapidAPI key (TecDoc parts catalog) |
 | `X_RAPIDAPI_HOST` | RapidAPI host |
 | `OPENAI_API_KEY` | OpenAI key (GPT-4.1-mini, parts AI + TecDoc chassis mapping) |
-| `GARAGE_HOST` | Garage.mn scraper API base URL |
-| `GARAGE_KEY` | Garage.mn API key |
+| `GARAGE_HOST` | Web scraper API base URL |
+| `GARAGE_KEY` | Web API key |
 | `SENTRY_DSN` | Sentry error tracking DSN |
 
 ---
