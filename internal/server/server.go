@@ -42,9 +42,7 @@ func Run(cfg config.Config, application *app.App) {
 		AllowCredentials: true,
 	}))
 
-	if cfg.MODE == "PRODUCTION" {
-		autoMigrate(pgdb.DB)
-	}
+	autoMigrate(pgdb.DB)
 
 	jobs.StartWorker(pgdb.DB)
 
