@@ -1,20 +1,19 @@
 package handler
 
 import (
-	"fmt"
-	"io"
 	"net/http"
-	"net/url"
-	"os"
+
+	vehiclesvc "gocars-api/internal/vehicle/service"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
-type CrawlerHandler struct{}
+type CrawlerHandler struct {
+	svc *vehiclesvc.CrawlerService
+}
 
-func NewCrawlerHandler() *CrawlerHandler {
-	return &CrawlerHandler{}
+func NewCrawlerHandler(svc *vehiclesvc.CrawlerService) *CrawlerHandler {
+	return &CrawlerHandler{svc: svc}
 }
 
 func (h *CrawlerHandler) Garage(c *gin.Context) {
@@ -24,51 +23,11 @@ func (h *CrawlerHandler) Garage(c *gin.Context) {
 		return
 	}
 
-	base := os.Getenv("GARAGE_HOST")
-	startURL := base + "platenew?platenumber=" + plate
-	if _, err := crawlPage(startURL); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	endURL := base + "plate?platenumber=" + plate
-	endBody, err := crawlPage(endURL)
+	body, err := h.svc.FetchGarageByPlate(plate)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"body": endBody})
-}
-
-func crawlPage(pageURL string) (string, error) {
-	res, err := http.Get(pageURL)
-	if err != nil {
-		zap.L().Error("Error fetching page", zap.String("url", pageURL), zap.Error(err))
-		return "", err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
-		return "", fmt.Errorf("status code %d", res.StatusCode)
-	}
-
-	bodyBytes, err := io.ReadAll(res.Body)
-	if err != nil {
-		return "", err
-	}
-
-	return string(bodyBytes), nil
-}
-
-func resolveURL(base, href string) string {
-	u, err := url.Parse(href)
-	if err != nil {
-		return ""
-	}
-	baseURL, err := url.Parse(base)
-	if err != nil {
-		return ""
-	}
-	return baseURL.ResolveReference(u).String()
+	c.JSON(http.StatusOK, gin.H{"body": body})
 }

@@ -45,7 +45,10 @@ func (r *OrderRepository) GetOrderForPDF(id int) (*roder.Order, error) {
 		Preload("OrderItems.ArticleItem.AllSpecifications").
 		First(&order, id).Error
 
-	return &order, err
+	if err != nil {
+		return nil, err
+	}
+	return &order, nil
 }
 
 func (r *OrderRepository) CreateOrderTransaction(

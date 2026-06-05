@@ -18,26 +18,9 @@ func NewModelHandler(svc *vehiclesvc.ModelService) *ModelHandler {
 }
 
 func (h *ModelHandler) GetModels(c *gin.Context) {
-	manufacturerID := utils.AtoiUint(c.DefaultQuery("manufacturer_id", "0"))
-	if manufacturerID == 0 {
-		manufacturerID = 100260
-	}
+	manufacturerID := utils.AtoiUint(c.DefaultQuery("manufacturer_id", "100260"))
 
-	modelResponse, err := h.svc.GetByManufacturerID(manufacturerID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database query failed"})
-		return
-	}
-
-	if modelResponse.CountModels > 0 {
-		c.JSON(http.StatusOK, gin.H{
-			"total":  modelResponse.CountModels,
-			"models": modelResponse.Models,
-		})
-		return
-	}
-
-	modelResponse, err = h.svc.FetchFromAPI(manufacturerID)
+	modelResponse, err := h.svc.GetOrFetchByManufacturerID(manufacturerID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch models"})
 		return

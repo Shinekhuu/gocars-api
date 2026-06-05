@@ -38,6 +38,11 @@ func InitDB(cfg config.Config) {
 		return (&net.Dialer{}).DialContext(ctx, "tcp4", addr)
 	}
 
+	// Disable prepared statements — required for Supabase/PgBouncer in transaction mode.
+	// PgBouncer routes each transaction to a different backend, so session-scoped
+	// prepared statements collide across requests (SQLSTATE 42P05).
+	pgxConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+
 	sqlDB := stdlib.OpenDB(*pgxConfig)
 
 	var gormDB *gorm.DB

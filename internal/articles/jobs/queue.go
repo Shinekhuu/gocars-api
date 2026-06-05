@@ -4,11 +4,17 @@ import (
 	"log"
 
 	articles "gocars-api/internal/articles/repository/postgresql/model"
+
+	"gorm.io/gorm"
 )
 
-var ArticleQueue = make(chan articles.ArticleItem, 100)
+var (
+	ArticleQueue = make(chan articles.ArticleItem, 100)
+	gdb          *gorm.DB
+)
 
-func StartWorker() {
+func StartWorker(db *gorm.DB) {
+	gdb = db
 	go func() {
 		for a := range ArticleQueue {
 			log.Println("processing:", a.ArticleID)

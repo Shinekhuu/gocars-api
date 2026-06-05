@@ -2,7 +2,6 @@ package jobs
 
 import (
 	articles "gocars-api/internal/articles/repository/postgresql/model"
-	db "gocars-api/internal/database/mysql"
 	"gocars-api/internal/search/meili"
 	"gocars-api/internal/search/models"
 
@@ -16,7 +15,7 @@ func processArticle(a articles.ArticleItem) {
 	}
 
 	var dbArticle articles.ArticleItem
-	if err := db.DB.
+	if err := gdb.
 		Preload("AllCategories.Category").
 		Where("article_id = ?", *a.ArticleID).
 		First(&dbArticle).Error; err != nil {
