@@ -43,6 +43,6 @@ func main() {
 		return
 	}
 
-	application := app.NewApp(pgdb.DB)
+	application := app.NewApp(pgdb.DB, cfg)
 	server.Run(cfg, application)
 }

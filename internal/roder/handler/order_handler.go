@@ -46,9 +46,8 @@ func (h *OrderHandler) GetOrderPDF(c *gin.Context) {
 		return
 	}
 
-	filename := "quote-" + id + ".pdf"
 	c.Header("Content-Type", "application/pdf")
-	c.Header("Content-Disposition", `attachment; filename="`+filename+`"`)
+	c.Header("Content-Disposition", "attachment; filename=\"quote-"+id+".pdf\"")
 	c.Data(http.StatusOK, "application/pdf", pdfBytes)
 }
 

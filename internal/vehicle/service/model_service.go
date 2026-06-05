@@ -98,3 +98,15 @@ func (s *ModelService) GetByName(manufacturerID uint, modelName, buildDate strin
 
 	return nil, fmt.Errorf("model not found for manufacturer %d and name %s", manufacturerID, modelName)
 }
+
+// GetOrFetchByManufacturerID returns models from DB, falling back to RapidAPI if not found.
+func (s *ModelService) GetOrFetchByManufacturerID(manufacturerID uint) (*model.ModelResponse, error) {
+	resp, err := s.GetByManufacturerID(manufacturerID)
+	if err != nil {
+		return nil, err
+	}
+	if resp.CountModels > 0 {
+		return resp, nil
+	}
+	return s.FetchFromAPI(manufacturerID)
+}

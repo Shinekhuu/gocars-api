@@ -2,7 +2,6 @@ package server
 
 import (
 	"log"
-	"os"
 
 	"gocars-api/internal/app"
 	"gocars-api/internal/articles/jobs"
@@ -43,11 +42,11 @@ func Run(cfg config.Config, application *app.App) {
 		AllowCredentials: true,
 	}))
 
-	if os.Getenv("MODE") != "DEVELOPMENT" {
+	if cfg.MODE == "PRODUCTION" {
 		autoMigrate(pgdb.DB)
 	}
 
-	jobs.StartWorker()
+	jobs.StartWorker(pgdb.DB)
 
 	router.GET("/health", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok", "service": "gocars-api"}) })
 	router.GET("/", func(c *gin.Context) { c.JSON(200, gin.H{"message": "Welcome"}) })

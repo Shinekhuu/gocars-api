@@ -126,10 +126,14 @@ func crawlGarage(pageURL string, visited map[string]bool) (*BodyResponse, error)
 		return nil, fmt.Errorf("non-200 HTTP status: %d", res.StatusCode)
 	}
 
+	fmt.Println(res)
+
 	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
+
+	fmt.Printf("Response body: %s\n", string(bodyBytes))
 
 	var bodyResponse BodyResponse
 	if err := json.Unmarshal(bodyBytes, &bodyResponse); err != nil {

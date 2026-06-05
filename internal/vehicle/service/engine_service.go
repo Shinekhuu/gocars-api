@@ -105,3 +105,15 @@ func (s *EngineService) GetByName(manufacturerID, modelID uint, frame string) ([
 func (s *EngineService) GetByTypeEngineNames(names []string) ([]model.Engine, error) {
 	return s.repo.GetByTypeEngineNames(names)
 }
+
+// GetOrFetchByModelID returns engines from DB, falling back to RapidAPI if not found.
+func (s *EngineService) GetOrFetchByModelID(manufacturerID, modelID uint) (*model.EngineResponse, error) {
+	resp, err := s.GetByModelID(modelID)
+	if err != nil {
+		return nil, err
+	}
+	if resp.CountModelTypes > 0 {
+		return resp, nil
+	}
+	return s.FetchFromAPI(manufacturerID, modelID)
+}

@@ -5,14 +5,12 @@ import (
 	"log"
 
 	articles "gocars-api/internal/articles/repository/postgresql/model"
-	db "gocars-api/internal/database/mysql"
 
 	"gorm.io/gorm"
 )
 
 func saveMain(a articles.ArticleItem) error {
-	return db.DB.Transaction(func(tx *gorm.DB) error {
-
+	return gdb.Transaction(func(tx *gorm.DB) error {
 		var existing articles.ArticleItem
 		err := tx.Where("article_id = ?", a.ArticleID).First(&existing).Error
 
@@ -30,7 +28,9 @@ func saveMain(a articles.ArticleItem) error {
 					"article_media_file_name": a.ArticleMediaFileName,
 					"s3_image":                a.S3Image,
 				})
-
+			if res.Error != nil {
+				return res.Error
+			}
 			log.Println("Rows:", res.RowsAffected)
 			a.ID = existing.ID
 
@@ -49,7 +49,6 @@ func saveMain(a articles.ArticleItem) error {
 				CriteriaName:  s.CriteriaName,
 				CriteriaValue: s.CriteriaValue,
 			}
-
 			tx.Where("article_item_id=? AND criteria_name=? AND criteria_value=?",
 				a.ID, s.CriteriaName, s.CriteriaValue).
 				FirstOrCreate(&spec)
