@@ -50,7 +50,7 @@ Config is loaded from env vars (or `.env` in dev). All vars live in `/dev|stagen
 | `MEILI_URL`, `MEILI_MASTER_KEY` | Meilisearch |
 | `X_RAPIDAPI_KEY`, `X_RAPIDAPI_HOST` | RapidAPI TecDoc catalog |
 | `OPENAI_API_KEY` | OpenAI GPT-4.1-mini (parts AI + TecDoc mapping) |
-| `GARAGE_HOST`, `GARAGE_KEY` | Garage.mn scraper API |
+| `GARAGE_HOST`, `GARAGE_KEY` | Web scraper API |
 | `SENTRY_DSN` | Sentry error tracking |
 
 **AutoMigrate** runs only when `cfg.MODE == "PRODUCTION"` (`server.go`). Skipped in `DEVELOPMENT` and `STAGING`.
@@ -189,7 +189,7 @@ default:
 | RapidAPI (`rapidapi.com`) | `articles/service/rapidapi_service.go` | TecDoc parts catalog |
 | OpenAI GPT-4.1-mini | `articles/service/openai_service.go` | Parts AI + TecDoc chassis mapping |
 | Meilisearch | `search/meili/` | Full-text search |
-| Garage.mn scraper | `vehicle/service/crawler_service.go` | Vehicle data scraping |
+| Web scraper | `vehicle/service/crawler_service.go` | Vehicle data scraping |
 | Sentry | `cmd/api/main.go` | Error tracking |
 
 ---
