@@ -162,7 +162,7 @@ scripts/
 
 ## AutoMigrate
 
-Runs on startup only when `MODE=PRODUCTION`. Skipped in all other modes — apply schema changes directly in DEVELOPMENT and STAGING.
+Runs on every startup regardless of `MODE`.
 
 ---
 

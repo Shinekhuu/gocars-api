@@ -53,7 +53,7 @@ Config is loaded from env vars (or `.env` in dev). All vars live in `/dev|stagen
 | `GARAGE_HOST`, `GARAGE_KEY` | Web scraper API |
 | `SENTRY_DSN` | Sentry error tracking |
 
-**AutoMigrate** runs only when `cfg.MODE == "PRODUCTION"` (`server.go`). Skipped in `DEVELOPMENT` and `STAGING`.
+**AutoMigrate** runs on every startup regardless of `MODE` (`server.go`).
 
 **PostgreSQL note:** Uses Supabase connection pooler (PgBouncer). pgx is configured with `QueryExecModeSimpleProtocol` to disable prepared statements — required to avoid `SQLSTATE 42P05` errors through the pooler.
 
