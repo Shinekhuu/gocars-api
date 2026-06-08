@@ -120,8 +120,8 @@ docker run \
 | `X_RAPIDAPI_KEY`   | RapidAPI key (TecDoc integration)                                   |
 | `X_RAPIDAPI_HOST`  | RapidAPI host                                                       |
 | `OPENAI_API_KEY`   | OpenAI API key (parts AI and TecDoc mapping)                        |
-| `GARAGE_HOST`      | Garage.mn scraper API base URL                                      |
-| `GARAGE_KEY`       | Garage.mn API key                                                   |
+| `GARAGE_HOST`      | Vehicle Identity Services scraper API base URL                      |
+| `GARAGE_KEY`       | Vehicle Identity Services API key                                   |
 | `SENTRY_DSN`       | Sentry error tracking                                               |
 
 ---
