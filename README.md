@@ -1,13 +1,34 @@
 # gocars-api
 
-REST API for the GoCars automotive parts marketplace.
+Production-grade REST API for the GoCars automotive marketplace platform.
 
-|               |                       |
-| ------------- | --------------------- |
-| **Language**  | Go                    |
-| **Framework** | Gin                   |
-| **Database**  | PostgreSQL (Supabase) |
-| **Port**      | 9000                  |
+## Platform Dependencies
+
+| Dependency                              | Role |
+| --------------------------------------- | ---- |
+| Supabase PostgreSQL                     | System of Record / Primary Database |
+| Redis                                   | Distributed Cache & Session Store |
+| Meilisearch                             | Search and Indexing Platform |
+| OpenAI API                              | AI-Powered Classification and Matching |
+| TecDoc                                  | Automotive Parts and Vehicle Catalog |
+| Vehicle Identification Service          | Vehicle Identification and Metadata Enrichment |
+| Authentication Service (`auth-service`) | Identity, Authentication, and Authorization |
+
+---
+
+## Technology Stack
+
+| Layer                  | Technology            |
+| ---------------------- | --------------------- |
+| Backend Language       | Go                    |
+| API Framework          | Gin                   |
+| Database               | PostgreSQL (Supabase) |
+| Cache                  | Redis                 |
+| Search Engine          | Meilisearch           |
+| AI Integration         | OpenAI API            |
+| Containerization       | Docker                |
+
+---
 
 ## Related Repositories
 
@@ -15,6 +36,162 @@ REST API for the GoCars automotive parts marketplace.
 | ----------------------------------------- | ----------------------------------------------------------------- |
 | https://github.com/Shinekhuu/gocars-local | Local development environment (Docker Compose, environment files) |
 | https://github.com/Shinekhuu/auth-service | Authentication and authorization service                          |
+
+---
+
+## Platform Architecture
+
+```mermaid
+flowchart LR
+
+    CLIENT[Client Applications]
+
+    CLIENT
+    --> ALB[AWS ALB]
+
+    ALB
+    --> INGRESS[NGINX Ingress]
+
+    INGRESS
+    --> API[gocars-api]
+
+    API
+    --> AUTH[auth-service]
+
+    API
+    --> DB[Supabase PostgreSQL]
+
+    API
+    --> REDIS[Redis]
+
+    API
+    --> MEILI[Meilisearch]
+
+    API
+    --> OPENAI[OpenAI]
+
+    API
+    --> TECDOC[TecDoc]
+
+    API
+    --> GARAGE[Vehicle Identification Service]
+```
+
+---
+
+## Responsibilities
+
+* Vehicle Lookup
+* Automotive Parts Search
+* Product Catalog
+* Order Processing
+* User Profile Management
+* AI-powered Matching
+* Search Index Management
+* Third-party Automotive Integrations
+* Authentication Integration
+
+---
+
+## System Architecture
+
+```mermaid
+flowchart TD
+
+    API[gocars-api]
+
+    API --> VEHICLE[Vehicle Domain]
+    API --> SEARCH[Search Domain]
+    API --> PRODUCT[Product Domain]
+    API --> ORDER[Order Domain]
+    API --> PROFILE[Profile Domain]
+
+    SEARCH --> MEILI[Meilisearch]
+
+    ORDER --> DB[PostgreSQL]
+
+    PROFILE --> AUTH[auth-service]
+
+    VEHICLE --> TECDOC[TecDoc]
+
+    VEHICLE --> OPENAI[OpenAI]
+```
+
+---
+
+## Production Features
+
+* Stateless Deployment
+* Redis Caching
+* Full-text Search via Meilisearch
+* External Authentication
+* Structured Logging
+* Sentry Monitoring
+* Containerized Deployment
+* Kubernetes Native
+* Horizontal Scaling Ready
+* Cloud Native Architecture
+
+---
+
+## Request Flow
+
+```mermaid
+sequenceDiagram
+
+    participant User
+    participant Ingress
+    participant API
+    participant Auth
+    participant Database
+
+    User->>Ingress: Request
+
+    Ingress->>Auth: Validate Token
+
+    Auth-->>Ingress: User Headers
+
+    Ingress->>API: Forward Request
+
+    API->>Database: Query
+
+    Database-->>API: Result
+
+    API-->>User: Response
+```
+
+---
+
+## Search Architecture
+
+```mermaid
+flowchart LR
+
+    USER[User Search]
+    --> API[gocars-api]
+
+    API
+    --> MEILI[Meilisearch]
+
+    MEILI
+    --> RESULTS[Search Results]
+```
+
+---
+
+## Infrastructure Dependencies
+
+```text
+gocars-api
+
+├── PostgreSQL (Supabase)
+├── Redis
+├── Meilisearch
+├── auth-service
+├── OpenAI
+├── TecDoc
+└── Vehicle Identification Service
+```
 
 ---
 
@@ -120,8 +297,8 @@ docker run \
 | `X_RAPIDAPI_KEY`   | RapidAPI key (TecDoc integration)                                   |
 | `X_RAPIDAPI_HOST`  | RapidAPI host                                                       |
 | `OPENAI_API_KEY`   | OpenAI API key (parts AI and TecDoc mapping)                        |
-| `GARAGE_HOST`      | Vehicle Identity Services scraper API base URL                      |
-| `GARAGE_KEY`       | Vehicle Identity Services API key                                   |
+| `GARAGE_HOST`      | Web scraper API base URL                                            |
+| `GARAGE_KEY`       | Web scraper API key                                                 |
 | `SENTRY_DSN`       | Sentry error tracking                                               |
 
 ---
@@ -161,9 +338,27 @@ Authentication is delegated to `auth-service`.
 
 `gocars-api` does not parse JWT tokens directly. It reads the `X-User-ID` and `X-User-Email` headers forwarded by NGINX after token validation.
 
+### Architecture
+
+```mermaid
+flowchart LR
+
+    CLIENT
+    --> AUTH[auth-service]
+
+    AUTH
+    --> SUPABASE[Supabase Auth]
+
+    CLIENT
+    --> API[gocars-api]
+
+    API
+    --> AUTH
+```
+
 ---
 
-## Architecture
+## Application Layers
 
 ```text
 cmd/api/main.go          ← application entry point
