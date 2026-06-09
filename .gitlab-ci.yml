@@ -1,26 +1,23 @@
-image: golang:1.24
-
 stages:
   - build
   - deploy
 
 variables:
-  GO_VERSION: "1.25.0"
-  CGO_ENABLED: "0"
-  GOOS: linux
-  GOARCH: amd64
   APP_NAME: gocars-api
   APP_DIR: "/home/api"
   SERVICE_NAME: gocars-api   # systemd service name
 
-before_script:
-  - go version
-  - go mod download
-
 build:
   stage: build
   tags: ["shell"]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
   script:
+    - go version
+    - go mod download
+    - $env:CGO_ENABLED="0"
+    - $env:GOOS="linux"
+    - $env:GOARCH="amd64"
     - go build -o $APP_NAME
   artifacts:
     paths:
@@ -31,19 +28,20 @@ deploy:
   tags: ["shell"]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+
   before_script:
-    - echo "Setup SSH"
-    - mkdir -p ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - ssh-keyscan $DEPLOY_HOST >> ~/.ssh/known_hosts
+    - echo "Setting up SSH..."
+    - New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.ssh
+    - $SSH_PRIVATE_KEY | Out-File -Encoding ascii "$env:USERPROFILE\.ssh\id_rsa"
+
   script:
-    - echo "Deploy to server"
-    - scp $APP_NAME $DEPLOY_USER@$DEPLOY_HOST:$APP_DIR/$APP_NAME.new
+    - scp -o StrictHostKeyChecking=no $APP_NAME "${env:DEPLOY_USER}@${env:DEPLOY_HOST}:${env:APP_DIR}/$APP_NAME.new"
+
     - |
-      ssh $DEPLOY_USER@$DEPLOY_HOST "
-        export ENV_PATH=$ENV_PATH
-        sudo install -o root -g root -m 755 \
-          $APP_DIR/$APP_NAME.new $APP_DIR/$APP_NAME
-        sudo systemctl restart $SERVICE_NAME
+      ssh -o StrictHostKeyChecking=no "${env:DEPLOY_USER}@${env:DEPLOY_HOST}" "
+        set -e
+        sudo install -o root -g root -m 755 ${env:APP_DIR}/$APP_NAME.new ${env:APP_DIR}/$APP_NAME
+        sudo systemctl daemon-reload
+        sudo systemctl restart ${env:SERVICE_NAME}
+        sudo systemctl status ${env:SERVICE_NAME} --no-pager
       "
